@@ -1,0 +1,27 @@
+# ===== Web框架 =====
+streamlit>=1.30.0
+
+# ===== PDF处理 =====
+pdfplumber>=0.10.0
+
+# ===== 大模型 =====
+openai>=1.0.0
+
+# ===== 向量检索（RAG） =====
+numpy>=1.24.0
+jieba>=0.42.1
+scikit-learn>=1.3.0
+sentence-transformers>=3.0.0
+
+# ===== 阿里云OCR =====
+alibabacloud_ocr_api20210707>=3.0.0
+alibabacloud_tea_openapi>=0.3.0
+alibabacloud_darabonba_stream>=0.0.1
+
+# ===== Agent框架 =====
+langchain>=0.3.0
+langchain-core>=0.3.0
+langgraph>=0.2.0
+
+# ===== 文档处理 =====
+python-docx>=1.0.0
