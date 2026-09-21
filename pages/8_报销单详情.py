@@ -178,7 +178,13 @@ st.divider()  # 分隔线
 st.subheader("风控检测")  # 小标题
 anomaly_check = audit.get("anomaly_check") or {}  # 从审核记录中取出风控结果
 
-if anomaly_check.get("error"):
+# 判断是否真的跑过风控：有风控结果字段才算跑过，空字典不算
+ran_anomaly = bool(anomaly_check) and ("has_risk" in anomaly_check or "error" in anomaly_check)
+
+if not ran_anomaly:
+    # 草稿/未提交审核：根本没跑过风控，不能显示"通过"
+    st.caption("未执行风控检测（草稿状态，提交审核后自动执行）")
+elif anomaly_check.get("error"):
     # 风控检测本身出错了
     st.warning(f"风控检测异常：{anomaly_check['error']}")
 elif anomaly_check.get("has_risk"):
@@ -201,7 +207,7 @@ elif anomaly_check.get("has_risk"):
         for i, item in enumerate(low_items, 1):
             st.markdown(f"{i}. **{item['type']}**：{item['message']}")
 else:
-    # 无风险：绿色提示
+    # 真的跑过且无风险：绿色提示
     st.success("风控检测通过 · 6项检测全部正常（重复报销/连号/拆分/金额临界/高频/行为画像）")
 
 st.divider()  # 分隔线
@@ -267,18 +273,41 @@ if appeal_record and appeal_record.get("form_no") == (form.get("form_no") or "-"
 if (form.get("status") or "") in ("已驳回", "待财务终审", "草稿"):  # 草稿/待终审/已驳回都能编辑或删除
     st.divider()  # 分隔线
 
-    # 编辑按钮：跳转到报销单填写页的编辑模式
-    edit_col, delete_col = st.columns(2)
-    with edit_col:
-        if st.button("编辑报销单", type="primary", use_container_width=True):
-            st.session_state["edit_expense_form_id"] = form_id
-            st.switch_page("pages/7_报销单填写.py")
+    current_status = form.get("status") or ""
 
-    with delete_col:
-        st.caption("删除后这张报销单会从系统里消失，对应的发票会重新变成「未填写」，可以再填一次。")  # 灰色说明
-        confirm = st.checkbox("我确认删除这张报销单", key="confirm_delete_form")  # 二次确认，避免误删
-        if st.button("删除此报销单并重新填写", use_container_width=True, disabled=not confirm):  # 勾选确认后才能点
-            delete_expense_form(form_id)  # 从数据库删掉这张单（单号占用的发票也随之释放）
-            st.session_state.pop("expense_form_id", None)  # 清掉会话里记录的报销单 id
-            st.success("已删除，可回到票夹重新填写")  # 绿色提示
-            st.switch_page("pages/2_我的报销单.py")  # 跳回我的报销单页
+    if current_status == "草稿":
+        # 草稿状态：最显眼的按钮是"提交审核"，其次才是编辑和删除
+        st.info("这是一张草稿，尚未提交审核。完善内容后可提交进入财务终审。")
+        submit_col, edit_col, delete_col = st.columns([2, 1, 1])
+        with submit_col:
+            if st.button("提交审核", type="primary", use_container_width=True):
+                st.session_state["edit_expense_form_id"] = form_id
+                st.switch_page("pages/7_报销单填写.py")
+        with edit_col:
+            if st.button("编辑", use_container_width=True):
+                st.session_state["edit_expense_form_id"] = form_id
+                st.switch_page("pages/7_报销单填写.py")
+        with delete_col:
+            st.caption("删除后发票可重新填写。")
+            confirm = st.checkbox("我确认删除", key="confirm_delete_form")
+            if st.button("删除", use_container_width=True, disabled=not confirm):
+                delete_expense_form(form_id)
+                st.session_state.pop("expense_form_id", None)
+                st.success("已删除")
+                st.switch_page("pages/2_我的报销单.py")
+    else:
+        # 已驳回/待终审：编辑 + 删除
+        edit_col, delete_col = st.columns(2)
+        with edit_col:
+            if st.button("编辑报销单", type="primary", use_container_width=True):
+                st.session_state["edit_expense_form_id"] = form_id
+                st.switch_page("pages/7_报销单填写.py")
+
+        with delete_col:
+            st.caption("删除后这张报销单会从系统里消失，对应的发票会重新变成「未填写」，可以再填一次。")
+            confirm = st.checkbox("我确认删除这张报销单", key="confirm_delete_form")
+            if st.button("删除此报销单并重新填写", use_container_width=True, disabled=not confirm):
+                delete_expense_form(form_id)
+                st.session_state.pop("expense_form_id", None)
+                st.success("已删除，可回到票夹重新填写")
+                st.switch_page("pages/2_我的报销单.py")
