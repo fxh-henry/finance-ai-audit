@@ -82,8 +82,8 @@ class SimpleVectorRetriever:
                         warn(f"加载向量缓存失败: {e}，将重新计算")
             
             info("开始加载向量模型...")
-            # 加载轻量级中文embedding模型m3e-small，用于文本转语义向量
-            self.model = SentenceTransformer(MODEL_NAME)
+            # 走 get_model()，优先用本地 models/m3e-small/，不联网
+            self.model = get_model(MODEL_NAME)
             info("向量模型加载成功")
 
             # 提取所有文档块的纯文本内容
