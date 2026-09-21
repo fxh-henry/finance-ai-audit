@@ -32,3 +32,6 @@ Thumbs.db
 # ===== 日志 / 缓存 =====
 *.log
 rag/cache/
+
+# 模型缓存（只提交实际模型文件，不提交下载缓存）
+models/**/.cache/
