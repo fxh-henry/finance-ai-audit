@@ -6,13 +6,16 @@ from datetime import datetime  # 记录申诉提交时间
 import streamlit as st  # 导入 Streamlit
 
 import database.db as _db  # 引入数据库模块（查报销单 / 查发票 / 删报销单）
-from utils.audit_verdict import normalize_audit  # 结论规范化工具（保证展示的结论与 Agent 一致）
-from utils.expense_form import normalize_ext_fields  # 分类扩展字段 → “标签 + 值”列表
+from utils.audit_verdict import normalize_audit, extract_verdict  # 结论规范化工具
+from utils.expense_form import normalize_ext_fields  # 分类扩展字段
+from utils.current_user import get_current_employee_id  # 当前登录员工
+from pipeline import run_expense_form_audit, format_anomaly_for_user  # 终审流程
 
 _db = importlib.reload(_db)  # 强制重新加载，保证拿到最新版本的函数
 get_expense_form = _db.get_expense_form  # 查询单张报销单
 get_invoice_detail = _db.get_invoice_detail  # 查询关联发票
-delete_expense_form = _db.delete_expense_form  # 删除报销单（已驳回时允许重填）
+delete_expense_form = _db.delete_expense_form  # 删除报销单
+update_expense_form_audit = _db.update_expense_form_audit  # 回写终审结果
 
 st.set_page_config(page_title="报销单详情", layout="wide")  # 页面配置：标签标题 + 宽屏布局
 
@@ -276,13 +279,44 @@ if (form.get("status") or "") in ("已驳回", "待财务终审", "草稿"):  # 
     current_status = form.get("status") or ""
 
     if current_status == "草稿":
-        # 草稿状态：最显眼的按钮是"提交审核"，其次才是编辑和删除
-        st.info("这是一张草稿，尚未提交审核。完善内容后可提交进入财务终审。")
+        # 草稿状态：直接在本页提交审核，不用跳回填写页
+        st.info("这是一张草稿，尚未提交审核。")
         submit_col, edit_col, delete_col = st.columns([2, 1, 1])
         with submit_col:
             if st.button("提交审核", type="primary", use_container_width=True):
-                st.session_state["edit_expense_form_id"] = form_id
-                st.switch_page("pages/7_报销单填写.py")
+                # 从当前单据构造送审数据
+                invoice_detail = get_invoice_detail(form.get("invoice_id"))
+                invoice_data = invoice_detail.get("parsed") or {}
+                agent_payload = {
+                    "form_no": form.get("form_no"),
+                    "trip_no": form.get("trip_no"),
+                    "expense_type": form.get("expense_type"),
+                    "occur_date": form.get("occur_date"),
+                    "reason": form.get("reason"),
+                    "total_amount": form.get("total_amount"),
+                    "participants": form.get("participants"),
+                    "ext_fields": form.get("ext_fields"),
+                    "detail_items": form.get("detail_items"),
+                }
+                with st.spinner("正在执行风控检测和AI终审，请稍候..."):
+                    audit_result = run_expense_form_audit(
+                        invoice_data, agent_payload,
+                        exclude_form_id=form_id,
+                        employee_id=get_current_employee_id(),
+                    )
+                verdict = extract_verdict(audit_result.get("answer")) or "不通过"
+                new_status = "已通过" if verdict == "通过" else "已驳回"
+                update_expense_form_audit(
+                    form_id,
+                    audit_result={
+                        "final_result": verdict,
+                        "agent_answer": audit_result.get("answer"),
+                        "anomaly_check": audit_result.get("anomaly_check"),
+                        "checked_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                    },
+                    status=new_status,
+                )
+                st.rerun()
         with edit_col:
             if st.button("编辑", use_container_width=True):
                 st.session_state["edit_expense_form_id"] = form_id
