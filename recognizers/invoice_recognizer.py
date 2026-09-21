@@ -5,6 +5,7 @@
 from utils.file_utils import detect_file_type
 from recognizers.pdf_parser import extract_invoice as extract_from_pdf
 from recognizers.xml_parser import extract_from_xml
+from recognizers.ocr_service import recognize_invoice as ocr_recognize
 
 
 def _normalize_invoice_data(invoice_data):
@@ -60,9 +61,9 @@ def recognize_invoice(file_path):
         # PDF坐标法提取（已完成）
         result = extract_from_pdf(file_path)
 
-    elif file_type in ("jpg", "png"):
-        # TODO: OCR识别（阿里云通用票证抽取）
-        return {"error": "图片OCR功能开发中", "file_type": file_type}
+    elif file_type in ("jpg", "png", "jpeg"):
+        # 图片格式：调用阿里云通用票证 OCR 识别
+        result = ocr_recognize(file_path)
 
     else:
         return {"error": f"不支持的文件格式: {file_type}"}
