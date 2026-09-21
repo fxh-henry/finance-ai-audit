@@ -8,7 +8,11 @@ if project_root not in sys.path:
     sys.path.append(project_root)
 
 from rag.rag_config import HF_ENDPOINT,MODEL_NAME,USE_CACHE
-os.environ["HF_ENDPOINT"] = HF_ENDPOINT
+
+# 只有本地开发才用国内镜像；Streamlit Cloud 服务器在海外，直连 huggingface.co 更快
+# 云端特征路径：/mount/src/...
+if "/mount/src/" not in os.getcwd():
+    os.environ["HF_ENDPOINT"] = HF_ENDPOINT
 
 # 导入数值计算库numpy，用于向量点积、范数计算，实现手写余弦相似度
 import numpy as np
