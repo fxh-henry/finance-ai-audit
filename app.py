@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+﻿# -*- coding: utf-8 -*-
 """财务智能报销系统：应用入口 + 侧边栏导航（多页面路由）+ 全站统一页面风格"""
 import sys  # 用于设置Python模块搜索路径
 from pathlib import Path  # 用于获取项目根目录
@@ -192,7 +192,6 @@ nav = st.navigation(  # 注册全部页面，并渲染左侧功能列表
         st.Page("pages/2_我的报销单.py", title="我的报销单", icon=":material/receipt_long:"),  # 报销单列表
         st.Page("pages/3_我的票夹.py", title="我的票夹", icon=":material/folder_open:"),  # 发票票夹
         st.Page("pages/4_帮助中心.py", title="帮助中心", icon=":material/help:"),  # 制度问答
-        st.Page("pages/5_个人中心.py", title="个人中心", icon=":material/person:"),  # 个人信息
         st.Page("pages/6_发票详情.py", title="发票详情", visibility="hidden"),  # 跳转页：不在侧边栏显示
         st.Page("pages/7_报销单填写.py", title="报销单填写", visibility="hidden"),  # 跳转页：从发票详情/票夹进入，不在侧边栏显示
         st.Page("pages/8_报销单详情.py", title="报销单详情", visibility="hidden"),  # 跳转页：从我的报销单进入，不在侧边栏显示
