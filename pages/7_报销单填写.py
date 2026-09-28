@@ -11,8 +11,8 @@ import database.db as _db  # 引入数据库模块（票夹发票 / 报销单增
 from audit.reason_check import check_reason_semantic
 from pipeline import run_expense_form_audit
 from pipeline import format_anomaly_for_user  # 引入"发票 + 报销单"一起送 Agent 终审的流程
-from utils.audit_verdict import extract_verdict  # 把 Agent 回答解析成 通过 / 不通过
-from utils.current_user import get_current_employee_id
+from utils.audit_verdict import resolve_final_verdict  # 取终审结论（优先读结构化字段，兜底文本解析）
+from utils.current_user import get_current_employee_id, get_current_employee  # 当前员工（含职级）
 from utils.expense_form import (  # 报销单配置与工具（和列表页、详情页、Agent 共用同一份）
     EXPENSE_CATEGORIES,  # 费用类型 → 分类扩展字段定义
     EXPENSE_TYPE_NAMES,  # 费用类型名称列表
@@ -86,6 +86,14 @@ with st.container(key="pagehead"):  # 统一页头容器：样式由 app.py 统�
     with head_l:  # 左侧：标题区
         st.header("报销单填写")  # 统一字号的大标题
         st.caption("1 张发票对应 1 张报销单；同一趟出差的多张单填同一个行程号，即可合并查看")  # 灰色说明
+        _current_emp = get_current_employee()  # 当前身份（含姓名 / 部门 / 职级）
+        if _current_emp:  # 取到员工信息才显示这一行
+            # 把职级显式写出来：住宿费等标准是按「职级 × 城市等级」查表的，
+            # 用户需要能确认系统正在用自己这一档核算，而不是偷偷按最低档算
+            st.caption(
+                f"报销人：{_current_emp.get('name')} · {_current_emp.get('department')} · "
+                f"职级 {_current_emp.get('level')}（费用标准按此档位核算）"
+            )
     with head_r:  # 右侧：返回入口
         if st.button("← 返回票夹", use_container_width=True):  # 次要按钮
             st.switch_page("pages/3_我的票夹.py")  # 跳回我的票夹页
@@ -490,40 +498,133 @@ def _submit_for_audit(is_edit_mode, edit_form_id, edit_form, invoice_id,
         "ext_fields": ext_values,
         "detail_items": detail_items,
     }
-    with st.spinner("正在执行风控检测和AI终审，请稍候..."):
+    # ---------- 风控检测（独立板块） ----------
+    st.markdown("### 风控检测")
+    risk_container = st.container()
+
+    # ---------- AI审核全过程 ----------
+    st.markdown("### AI审核全过程")
+    timeline_container = st.container()
+
+    RISK_KEYWORDS = ("风控", "重复报销", "连号", "拆分报销", "金额临界", "高频报销", "行为画像")
+
+    def on_audit_event(event):
+        etype = event.get("type", "")
+        text = event.get("text", "")
+        # 风控类事件渲染到风控区，其余渲染到AI审核区
+        if etype in ("stage_start", "stage_end", "check_item") and any(k in text for k in RISK_KEYWORDS):
+            target = risk_container
+        else:
+            target = timeline_container
+        with target:
+            if etype == "stage_start":
+                st.markdown(f"▶️ **{text}**")
+            elif etype == "stage_end":
+                st.markdown(f"✅ {text}")
+            elif etype == "thinking":
+                txt = text.lstrip("#").strip()
+                display = txt[:150] + ("..." if len(txt) > 150 else "")
+                st.markdown(f"  💭 思考：{display}")
+            elif etype == "tool_call":
+                st.markdown(f"  🔧 调用工具：`{event.get('tool_name', '')}`")
+            elif etype == "tool_result":
+                st.markdown(f"  📦 工具返回：`{event.get('tool_name', '')}` 完成")
+            elif etype == "answer":
+                st.markdown(f"  📝 **AI审核结论：**")
+                import re as _re
+                ans = text.lstrip("#").strip()
+                ans = _re.sub(r"\*\*", "", ans)  # 去掉markdown加粗
+                if ans:
+                    st.write(ans)
+            elif etype == "structured":
+                st.markdown(f"  📋 结构化裁决完成")
+            elif etype == "structured_done":
+                st.markdown(f"📋 {text}")
+            elif etype == "check_item":
+                st.markdown(f"  {text}")
+            elif etype == "reflection_start":
+                st.markdown(f"🔁 **{text}**")
+            elif etype == "reflection_result":
+                st.markdown(f"🔁 **{text}**")
+            elif etype == "structured_json":
+                st.code(event.get("data", ""), language="json")
+
+    with st.spinner("正在执行终审（规则检测 + 大模型推理 + 工具调用 + 防幻觉校验）..."):
         audit = run_expense_form_audit(
             invoice_data, agent_payload,
             exclude_form_id=form_id_for_audit,
             employee_id=get_current_employee_id(),
+            on_event=on_audit_event,
         )
 
-    # 展示风控检测结果
-    anomaly_result = audit.get("anomaly_check", {})
-    if anomaly_result.get("has_risk"):
-        st.warning(f"风控检测发现 {anomaly_result['risk_count']} 项异常")
-    else:
-        st.success("风控检测通过，未发现异常")
-    with st.expander("查看风控检测详情", expanded=False):
-        st.code(format_anomaly_for_user(anomaly_result), language=None)
-
-    # 解析终审结论，写回数据库
-    verdict = extract_verdict(audit.get("answer")) or "不通过"
+    # 取终审结论，写回数据库
+    structured = audit.get("verdict") or {}
+    verdict = resolve_final_verdict(audit) or "不通过"
     status = "已通过" if verdict == "通过" else "已驳回"
+    anomaly_result = audit.get("anomaly_check", {})
+    trace_data = {}
+    agent_obj = audit.get("agent")
+    if agent_obj and hasattr(agent_obj, "last_trace"):
+        trace_data = agent_obj.last_trace.to_dict()
+    guard_report = audit.get("verdict_guard") or {}
+
     update_expense_form_audit(
         form_id_for_audit,
         audit_result={
             "final_result": verdict,
             "agent_answer": audit.get("answer"),
+            "structured": structured,
             "anomaly_check": anomaly_result,
             "reason_check": reason_check,
+            "trace": trace_data,
+            "verdict_guard": guard_report,
+            "reflection": audit.get("reflection") or {},
             "checked_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         },
         status=status,
     )
-    st.session_state["expense_form_id"] = form_id_for_audit
-    st.session_state.pop("expense_form_invoice_id", None)
-    st.session_state.pop("edit_expense_form_id", None)
-    st.switch_page("pages/8_报销单详情.py")
+
+    # 制度依据（引用溯源）
+    citations = structured.get("citations") or []
+    rag_texts = []
+    for step in (trace_data.get("steps") or []):
+        if step.get("tool_name") == "rag_policy_search_tool":
+            tr = step.get("tool_result") or {}
+            pt = tr.get("policy_text") or ""
+            if not pt and isinstance(tr, dict):
+                # policy_text可能嵌套在别的key里，拍平找
+                for v in tr.values():
+                    if isinstance(v, str) and len(v) > 50:
+                        pt = v
+                        break
+            if pt:
+                rag_texts.append(pt)
+    with st.expander("制度依据（引用溯源）", expanded=False):
+        if citations:
+            st.markdown("**引用的制度条款：**")
+            for c in citations:
+                st.markdown(f"📌 {c}")
+        else:
+            st.caption("（本次裁决未列出具体条款引用）")
+        st.markdown("")
+        if rag_texts:
+            st.markdown("**RAG检索到的制度原文：**")
+            for i, pt in enumerate(rag_texts, 1):
+                st.caption(f"检索结果 {i}")
+                st.write(pt[:500] + ("..." if len(pt) > 500 else ""))
+
+    # 审核完成：显示结论 + 按钮，不自动跳转
+    st.divider()
+    if verdict == "通过":
+        st.success(f"✅ 审核完成：{verdict}")
+    else:
+        st.error(f"❌ 审核完成：{verdict}")
+    st.markdown("以上为完整审核过程，可仔细查看后点击下方按钮查看报销单详情。")
+    if st.button("查看报销单详情", type="primary"):
+        st.session_state["expense_form_id"] = form_id_for_audit
+        st.session_state.pop("expense_form_invoice_id", None)
+        st.session_state.pop("edit_expense_form_id", None)
+        st.switch_page("pages/8_报销单详情.py")
 
 # ---------------------------------------------------------------------------
 # 提交处理：两个按钮（保存草稿 / 提交审核），都先做事由语义审核
@@ -571,9 +672,25 @@ if submitted:  # 用户点了保存或提交
             reason_check = cached["result"]
             st.caption("事由语义审核结果已缓存（表单内容未变更）")
         else:
-            # 签名变了，重新执行语义审核
-            with st.spinner("正在执行事由语义审核..."):
-                reason_check = check_reason_semantic(invoice_data, reason.strip(), expense_type=expense_type)
+            # 签名变了，重新执行语义审核（流式显示LLM输出）
+            st.markdown("### 事由语义审核")
+            st.caption("🔗 LLM 调用中：正在分析报销事由与发票匹配度...")
+            stream_placeholder = st.empty()
+            streamed_text = []
+
+            def on_token(token):
+                streamed_text.append(token)
+                text = "".join(streamed_text)[-300:]
+                if text.strip():
+                    stream_placeholder.caption(text)
+
+            with st.spinner("正在执行事由语义审核：调用大模型分析报销事由与发票匹配度..."):
+                reason_check = check_reason_semantic(
+                    invoice_data, reason.strip(),
+                    expense_type=expense_type,
+                    on_token=on_token,
+                )
+            stream_placeholder.empty()  # 清掉流式输出
             # 存进缓存
             st.session_state["semantic_check_cache"] = {
                 "signature": semantic_signature,
@@ -645,4 +762,6 @@ if submitted:  # 用户点了保存或提交
                     participants, ext_values, detail_items, invoice_data,
                     reason_check,
                 )
+
+
 

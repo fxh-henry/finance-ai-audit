@@ -198,7 +198,7 @@ def init_db():
         ("E002", "李四", "销售部", "部门经理"),
         ("E003", "王五", "技术部", "普通员工"),
         ("E004", "赵六", "技术部", "普通员工"),
-        ("E005", "财务小王", "财务部", "财务"),
+        ("E005", "财务小王", "财务部", "普通员工"),
     ]
     now = _now()
     for emp_no, name, dept, level in preset_employees:
@@ -211,6 +211,18 @@ def init_db():
                 """,
                 (emp_no, name, dept, level, now, now),
             )
+
+    # ---- 职级口径归一 ----
+    # 费用标准只认三档职级（普通员工/部门经理/总经理及以上）。
+    # 库里若存了其它写法（例如历史预置的「财务」），该员工提交住宿费时
+    # 会命中「职级不在已知列表」而被莫名转人工。这里统一纠正成普通员工。
+    # 注意：preset 只在「记录不存在」时插入，所以必须单独跑一次 UPDATE 才能修到存量数据。
+    cursor.execute(
+        "UPDATE employee SET level = '普通员工' WHERE level NOT IN (?, ?, ?)",
+        ("普通员工", "部门经理", "总经理及以上"),
+    )
+    if cursor.rowcount:
+        print(f"职级口径归一：已纠正 {cursor.rowcount} 条不在标准三档内的职级")
 
     conn.commit()
     conn.close()
@@ -240,6 +252,30 @@ def list_employees():
     rows = cursor.fetchall()
     conn.close()
     return [dict(row) for row in rows]
+
+
+def get_employee(employee_id):
+    """
+    按员工ID查询单个员工（含职级 level）。
+
+    为什么需要它：费用标准是「按职级 × 城市等级」查表的，
+    同一个金额在不同职级下结论可能相反。审核流程必须拿到报销人的真实职级，
+    不能再让下游代码各自用「普通员工」兜底。
+
+    参数：
+        employee_id: 员工表主键（employee.id）
+    返回：
+        员工字典（id / emp_no / name / department / level），查不到返回 None
+    """
+    conn = get_connection()  # 打开数据库连接
+    cursor = conn.cursor()  # 创建游标
+    cursor.execute(
+        "SELECT id, emp_no, name, department, level FROM employee WHERE id = ?",
+        (employee_id,)
+    )  # 按主键查询单个员工
+    row = cursor.fetchone()  # 取一行结果
+    conn.close()  # 关闭连接
+    return dict(row) if row else None  # 有结果转成字典返回，没有则返回 None
 
 
 def is_invoice_exists(invoice_number):

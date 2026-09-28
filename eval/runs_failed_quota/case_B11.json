@@ -1,0 +1,148 @@
+{
+  "case_id": "case_B11",
+  "source": "报销单一致性",
+  "note": "材料票1200元，报销单填材料费并提供用途/领用人/使用部门，事由明确。票面与报销单一致，且制度对材料费没有金额标准",
+  "label": "通过",
+  "label_reason": "票面要素齐全、事由明确、无超标标准可适用，未发现可判定违规点。制度第二十六条对材料/办公采购只提流程留痕要求（采购申请、入库单），不在本实验可判定范围内",
+  "is_adversarial": false,
+  "employee_id": 3,
+  "employee_level": "普通员工",
+  "invoice_data": {
+    "发票类型": "电子发票（增值税专用发票）",
+    "发票种类": "增值税专用发票",
+    "发票号码": "26990000000000000019",
+    "开票日期": "2026年09月24日",
+    "购买方名称": "苏州城市学院",
+    "购买方税号": "12320500MB1F99368P",
+    "销售方名称": "江苏泗阳永益食品有限公司",
+    "销售方税号": "91321323MA1WBFAU8N",
+    "不含税金额": "1061.95",
+    "税额": "138.05",
+    "税率": "13%",
+    "价税合计小写": "1200.00",
+    "价税合计大写": "壹仟贰佰圆整",
+    "开票人": "陈静",
+    "备注": "",
+    "项目名称": "*金属制品*废桶",
+    "明细列表": [
+      {
+        "项目名称": "*金属制品*废桶",
+        "规格型号": "",
+        "单位": "批",
+        "数量": "1",
+        "单价": "1061.95",
+        "金额": "1061.95",
+        "税率": "13%",
+        "税额": "138.05"
+      }
+    ]
+  },
+  "expense_form": {
+    "expense_type": "材料费",
+    "trip_no": "TRIP-EVAL-B11",
+    "occur_date": "2026-09-24",
+    "reason": "车间废料回收过磅结算（附过磅单）",
+    "total_amount": 1200.0,
+    "participants": "王五",
+    "ext_fields": {
+      "purpose": "车间废料回收过磅结算",
+      "receiver": "王五",
+      "use_dept": "技术部"
+    },
+    "detail_items": []
+  },
+  "anomaly_result": {
+    "has_risk": false,
+    "risk_count": 0,
+    "risk_items": [],
+    "all_results": {
+      "duplicate": {
+        "is_duplicate": false,
+        "previous_records": [],
+        "message": "发票号码 26990000000000000019 无重复报销记录（已驳回/待审核的单据不计入）"
+      },
+      "consecutive": {
+        "is_consecutive": false,
+        "consecutive_count": 0,
+        "consecutive_invoices": [],
+        "message": "日期格式错误"
+      },
+      "split": {
+        "is_suspected_split": false,
+        "related_invoices": [],
+        "total_sum": 1200.0,
+        "threshold": 500,
+        "message": "未检测到拆分报销特征"
+      },
+      "amount_threshold": {
+        "is_critical": false,
+        "near_threshold": 0,
+        "gap": 0,
+        "ratio": 0,
+        "message": "金额未接近任何审批阈值"
+      },
+      "high_frequency": {
+        "is_abnormal": false,
+        "employee_count": 0,
+        "employee_total": 0,
+        "dept_avg_count": 0.0,
+        "dept_avg_total": 0.0,
+        "count_ratio": 0,
+        "amount_ratio": 0,
+        "message": "近30天报销0次、0.00元，处于部门正常水平"
+      },
+      "behavior_profile": {
+        "total_count": 0,
+        "total_amount": 0,
+        "expense_type_dist": {},
+        "top_sellers": [],
+        "pass_rate": 0,
+        "avg_amount": 0,
+        "last_reimburse_date": "无记录",
+        "message": "近90天共报销0次，总金额0.00元，通过率0.0%"
+      }
+    }
+  },
+  "answer": "",
+  "structured": {},
+  "trace": {
+    "steps": [],
+    "final_answer": "",
+    "structured": {},
+    "error": "Error code: 403 - {'error': {'message': 'Access to model denied. Please make sure you are eligible for using the model.', 'id': '6e8ed482-c489-9e71-8bb6-23b2c595c00a', 'type': 'AccessDenied.Unpurchased', 'code': 'AccessDenied.Unpurchased'}}"
+  },
+  "guard_report": {
+    "original_verdict": null,
+    "final_verdict": "不通过",
+    "overridden": false,
+    "errors": [
+      "结论取值非法：None，只能是「通过」或「不通过」"
+    ],
+    "warnings": [
+      "模型自评置信度偏低（0.50），建议人工复核"
+    ]
+  },
+  "reflection": {
+    "enabled": true,
+    "triggered": true,
+    "signals": [
+      {
+        "name": "置信度水平",
+        "level": "warn",
+        "detail": "置信度 0.50 偏低"
+      }
+    ],
+    "second_answer": "",
+    "second_structured": {},
+    "second_trace": {
+      "steps": [],
+      "final_answer": "",
+      "structured": {},
+      "error": "Error code: 403 - {'error': {'message': 'Access to model denied. Please make sure you are eligible for using the model.', 'id': '23b2e243-db05-9c4b-8357-9e3b0e4a438c', 'type': 'AccessDenied.Unpurchased', 'code': 'AccessDenied.Unpurchased'}}"
+    }
+  },
+  "meta": {
+    "elapsed_sec": 0.3,
+    "model": "qwen3.8-max"
+  }
+}

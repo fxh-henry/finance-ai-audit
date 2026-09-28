@@ -63,10 +63,11 @@ class RAGLLM:
         if self.rag_chain is None:
             raise RuntimeError("请先调用 .initialize() 初始化模型！")
 
-        # 第1步：调用RAG检索（返回的是拼接好的上下文字符串，带[资料1]标记）
+        # 第1步：调用RAG检索
         info(f"[RAG问答] 用户问题: {user_question}")
         rag = get_rag_service()
-        context = rag.retrieve(user_question, top_k=top_k)
+        retrieved = rag.retrieve(user_question, top_k=top_k, return_scores=True)
+        context = chr(10).join([f"[资料{i+1}]" + chr(10) + doc["content"] for i, (doc, score) in enumerate(retrieved)])
         info(f"[RAG问答] 检索完成，上下文长度 {len(context)} 字符")
 
         # 第2步：调用大模型生成回答
@@ -77,7 +78,10 @@ class RAGLLM:
         })
         success("[RAG问答] 回答生成完成")
 
-        return answer
+        # 返回答案 + 检索来源
+        sources = [{"content": doc["content"], "score": round(score, 3)}
+                   for doc, score in retrieved]
+        return answer, sources
 
     def print_result(self, user_question, retrieval_result):
         """流式输出（用于调试，需要外部先检索好结果传入）"""

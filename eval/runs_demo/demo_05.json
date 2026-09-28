@@ -1,0 +1,201 @@
+{
+  "case_id": "demo_05",
+  "source": "演示数据",
+  "note": "反思触发但结论不变",
+  "label": "不通过",
+  "label_reason": "演示用，非真实标注",
+  "is_adversarial": false,
+  "employee_id": 1,
+  "employee_level": "普通员工",
+  "invoice_data": {
+    "发票类型": "电子发票（普通发票）",
+    "发票号码": "26320000000000000005",
+    "开票日期": "2026年09月14日",
+    "购买方名称": "苏州城市学院",
+    "购买方税号": "12320500MB1F99368P",
+    "销售方名称": "某某酒店管理有限公司",
+    "销售方税号": "91321323MA1WBFAU8N",
+    "项目名称": "*住宿服务*住宿费",
+    "价税合计小写": "480",
+    "价税合计大写": "金额大写演示",
+    "不含税金额": "480",
+    "税额": "0.00",
+    "明细列表": [
+      {
+        "项目名称": "*住宿服务*住宿费",
+        "金额": "480",
+        "税额": "0.00",
+        "税率": "免税",
+        "数量": "1",
+        "单价": "480"
+      }
+    ]
+  },
+  "expense_form": {
+    "expense_type": "住宿费",
+    "trip_no": "TRIP-DEMO",
+    "ext_fields": {
+      "city": "上海",
+      "nights": 1,
+      "rooms": 1,
+      "guests": 1
+    },
+    "detail_items": [],
+    "total_amount": 480
+  },
+  "anomaly_result": {
+    "has_risk": false,
+    "risk_count": 0,
+    "risk_items": [],
+    "all_results": {}
+  },
+  "answer": "❌ 审核不通过\n原因：住宿费480元超标80元。",
+  "structured": {
+    "verdict": "不通过",
+    "expense_type": "住宿费",
+    "reasons": [
+      "住宿费480元超过标准400元/天"
+    ],
+    "evidence": [
+      {
+        "source": "expense_standard_tool",
+        "fact": "住宿费480元，一线城市普通员工标准400元/天，超标80元",
+        "passed": false
+      }
+    ],
+    "citations": [
+      "第十四条 住宿费标准"
+    ],
+    "confidence": 0.4,
+    "needs_human": false,
+    "explanation": "住宿费超标。"
+  },
+  "trace": {
+    "steps": [
+      {
+        "step": 2,
+        "kind": "tool_result",
+        "text": "",
+        "tool_name": "expense_standard_tool",
+        "tool_args": {},
+        "tool_result": {
+          "passed": false,
+          "standard": 400,
+          "actual": 480,
+          "exceed": 80.0,
+          "city_tier": "一线城市",
+          "city_recognized": true,
+          "level_recognized": true,
+          "source_clause": "第十四条 住宿费标准（元/天）",
+          "caliber": "上海（一线城市），普通员工，标准400元/天",
+          "needs_human": false,
+          "message": "住宿费480元，标准400元/天"
+        },
+        "ok": true
+      },
+      {
+        "step": 3,
+        "kind": "tool_result",
+        "text": "",
+        "tool_name": "rag_policy_search_tool",
+        "tool_args": {},
+        "tool_result": {
+          "query_terms": "住宿费 标准",
+          "policy_text": "第十四条 住宿费标准（元/天）：一线城市普通员工400元，部门经理500元。",
+          "clause_count": 1
+        },
+        "ok": true
+      }
+    ],
+    "final_answer": "❌ 审核不通过\n原因：住宿费480元超标80元。",
+    "structured": {
+      "verdict": "不通过",
+      "expense_type": "住宿费",
+      "reasons": [
+        "住宿费480元超过标准400元/天"
+      ],
+      "evidence": [
+        {
+          "source": "expense_standard_tool",
+          "fact": "住宿费480元，一线城市普通员工标准400元/天，超标80元",
+          "passed": false
+        }
+      ],
+      "citations": [
+        "第十四条 住宿费标准"
+      ],
+      "confidence": 0.4,
+      "needs_human": false,
+      "explanation": "住宿费超标。"
+    },
+    "error": ""
+  },
+  "guard_report": {},
+  "reflection": {
+    "enabled": true,
+    "triggered": true,
+    "signals": [
+      {
+        "name": "置信度水平",
+        "level": "warn",
+        "detail": "置信度偏低"
+      }
+    ],
+    "second_answer": "❌ 审核不通过\n原因：复核后仍超标80元。",
+    "second_structured": {
+      "verdict": "不通过",
+      "citations": [
+        "第十四条 住宿费标准"
+      ],
+      "evidence": [],
+      "reasons": [
+        "复核后仍超标"
+      ]
+    },
+    "second_trace": {
+      "steps": [
+        {
+          "step": 2,
+          "kind": "tool_result",
+          "text": "",
+          "tool_name": "expense_standard_tool",
+          "tool_args": {},
+          "tool_result": {
+            "passed": false,
+            "standard": 400,
+            "actual": 480,
+            "exceed": 80.0,
+            "city_tier": "一线城市",
+            "city_recognized": true,
+            "level_recognized": true,
+            "source_clause": "第十四条 住宿费标准（元/天）",
+            "caliber": "上海（一线城市），普通员工，标准400元/天",
+            "needs_human": false,
+            "message": "住宿费480元，标准400元/天"
+          },
+          "ok": true
+        },
+        {
+          "step": 3,
+          "kind": "tool_result",
+          "text": "",
+          "tool_name": "rag_policy_search_tool",
+          "tool_args": {},
+          "tool_result": {
+            "query_terms": "住宿费 标准",
+            "policy_text": "第十四条 住宿费标准（元/天）：一线城市普通员工400元，部门经理500元。",
+            "clause_count": 1
+          },
+          "ok": true
+        }
+      ],
+      "final_answer": "",
+      "structured": {},
+      "error": ""
+    }
+  },
+  "meta": {
+    "elapsed_sec": 42.0,
+    "model": "demo"
+  }
+}

@@ -1,0 +1,81 @@
+{
+  "runs": 24,
+  "false_positive": {
+    "basis": "模型结论与金标准一致、且非对抗样本",
+    "total": 9,
+    "hard": 0,
+    "any": 0,
+    "hard_rate": 0.0,
+    "any_rate": 0.0
+  },
+  "all_samples_flag_rate": {
+    "total": 24,
+    "hard": 2,
+    "any": 2,
+    "hard_rate": 0.0833,
+    "any_rate": 0.0833
+  },
+  "recall": {
+    "injected": 101,
+    "hard_hit": 42,
+    "any_hit": 101,
+    "hard_rate": 0.4158,
+    "any_rate": 1.0
+  },
+  "by_type": [
+    {
+      "name": "结论与工具矛盾",
+      "desc": "工具判超标，结论写成通过",
+      "eligible": 4,
+      "hard_hit": 4,
+      "any_hit": 4,
+      "hard_recall": 1.0,
+      "any_recall": 1.0
+    },
+    {
+      "name": "证据来源非法",
+      "desc": "source 编了一个不存在的名字",
+      "eligible": 24,
+      "hard_hit": 24,
+      "any_hit": 24,
+      "hard_recall": 1.0,
+      "any_recall": 1.0
+    },
+    {
+      "name": "引用未调用的工具",
+      "desc": "引用了本轮没调用过的工具当证据",
+      "eligible": 1,
+      "hard_hit": 1,
+      "any_hit": 1,
+      "hard_recall": 1.0,
+      "any_recall": 1.0
+    },
+    {
+      "name": "金额无法溯源",
+      "desc": "证据里的金额票面和工具返回都没有",
+      "eligible": 24,
+      "hard_hit": 2,
+      "any_hit": 24,
+      "hard_recall": 0.0833,
+      "any_recall": 1.0
+    },
+    {
+      "name": "编造制度条款",
+      "desc": "引用了检索从未返回过的条款",
+      "eligible": 24,
+      "hard_hit": 1,
+      "any_hit": 24,
+      "hard_recall": 0.0417,
+      "any_recall": 1.0
+    },
+    {
+      "name": "通过但无证据",
+      "desc": "结论通过且证据为空",
+      "eligible": 24,
+      "hard_hit": 10,
+      "any_hit": 24,
+      "hard_recall": 0.4167,
+      "any_recall": 1.0
+    }
+  ]
+}

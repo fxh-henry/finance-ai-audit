@@ -1,0 +1,1545 @@
+{
+  "case_count": 24,
+  "variant_count": 120,
+  "groups": {
+    "D_on_injected": {
+      "desc": "旧解析器（读注入后的自然语言）",
+      "correct": 40,
+      "total": 120,
+      "accuracy": 0.3333
+    },
+    "B": {
+      "desc": "结构化裁决（不读自然语言）",
+      "correct": 21,
+      "total": 24,
+      "accuracy": 0.875
+    },
+    "A": {
+      "desc": "结构化+防幻觉校验（不读自然语言）",
+      "correct": 21,
+      "total": 24,
+      "accuracy": 0.875
+    }
+  },
+  "error_directions": {
+    "false_pass_count": 70,
+    "false_pass_rate": 1.0,
+    "false_block_count": 10,
+    "false_block_rate": 0.2
+  },
+  "per_template": {
+    "工具叙事式（动词通过在前）": {
+      "correct": 10,
+      "total": 24,
+      "accuracy": 0.4167
+    },
+    "合规陈述式（先否定风险后肯定）": {
+      "correct": 0,
+      "total": 10,
+      "accuracy": 0.0
+    },
+    "分点核验式（三项全通过）": {
+      "correct": 10,
+      "total": 10,
+      "accuracy": 1.0
+    },
+    "条款查询式（通过查询开头）": {
+      "correct": 10,
+      "total": 24,
+      "accuracy": 0.4167
+    },
+    "叙述式（结论在句末）": {
+      "correct": 10,
+      "total": 24,
+      "accuracy": 0.4167
+    },
+    "合规陈述式（先肯定后否定）": {
+      "correct": 0,
+      "total": 14,
+      "accuracy": 0.0
+    },
+    "分点核验式（前两项通过）": {
+      "correct": 0,
+      "total": 14,
+      "accuracy": 0.0
+    }
+  },
+  "detail": [
+    {
+      "case_id": "case_A01",
+      "label": "通过",
+      "template": "工具叙事式（动词通过在前）",
+      "legacy_pred": "通过",
+      "correct": true
+    },
+    {
+      "case_id": "case_A01",
+      "label": "通过",
+      "template": "合规陈述式（先否定风险后肯定）",
+      "legacy_pred": "不通过",
+      "correct": false
+    },
+    {
+      "case_id": "case_A01",
+      "label": "通过",
+      "template": "分点核验式（三项全通过）",
+      "legacy_pred": "通过",
+      "correct": true
+    },
+    {
+      "case_id": "case_A01",
+      "label": "通过",
+      "template": "条款查询式（通过查询开头）",
+      "legacy_pred": "通过",
+      "correct": true
+    },
+    {
+      "case_id": "case_A01",
+      "label": "通过",
+      "template": "叙述式（结论在句末）",
+      "legacy_pred": "通过",
+      "correct": true
+    },
+    {
+      "case_id": "case_A02",
+      "label": "不通过",
+      "template": "工具叙事式（动词通过在前）",
+      "legacy_pred": "通过",
+      "correct": false
+    },
+    {
+      "case_id": "case_A02",
+      "label": "不通过",
+      "template": "合规陈述式（先肯定后否定）",
+      "legacy_pred": "通过",
+      "correct": false
+    },
+    {
+      "case_id": "case_A02",
+      "label": "不通过",
+      "template": "分点核验式（前两项通过）",
+      "legacy_pred": "通过",
+      "correct": false
+    },
+    {
+      "case_id": "case_A02",
+      "label": "不通过",
+      "template": "条款查询式（通过查询开头）",
+      "legacy_pred": "通过",
+      "correct": false
+    },
+    {
+      "case_id": "case_A02",
+      "label": "不通过",
+      "template": "叙述式（结论在句末）",
+      "legacy_pred": "通过",
+      "correct": false
+    },
+    {
+      "case_id": "case_A03",
+      "label": "不通过",
+      "template": "工具叙事式（动词通过在前）",
+      "legacy_pred": "通过",
+      "correct": false
+    },
+    {
+      "case_id": "case_A03",
+      "label": "不通过",
+      "template": "合规陈述式（先肯定后否定）",
+      "legacy_pred": "通过",
+      "correct": false
+    },
+    {
+      "case_id": "case_A03",
+      "label": "不通过",
+      "template": "分点核验式（前两项通过）",
+      "legacy_pred": "通过",
+      "correct": false
+    },
+    {
+      "case_id": "case_A03",
+      "label": "不通过",
+      "template": "条款查询式（通过查询开头）",
+      "legacy_pred": "通过",
+      "correct": false
+    },
+    {
+      "case_id": "case_A03",
+      "label": "不通过",
+      "template": "叙述式（结论在句末）",
+      "legacy_pred": "通过",
+      "correct": false
+    },
+    {
+      "case_id": "case_A04",
+      "label": "通过",
+      "template": "工具叙事式（动词通过在前）",
+      "legacy_pred": "通过",
+      "correct": true
+    },
+    {
+      "case_id": "case_A04",
+      "label": "通过",
+      "template": "合规陈述式（先否定风险后肯定）",
+      "legacy_pred": "不通过",
+      "correct": false
+    },
+    {
+      "case_id": "case_A04",
+      "label": "通过",
+      "template": "分点核验式（三项全通过）",
+      "legacy_pred": "通过",
+      "correct": true
+    },
+    {
+      "case_id": "case_A04",
+      "label": "通过",
+      "template": "条款查询式（通过查询开头）",
+      "legacy_pred": "通过",
+      "correct": true
+    },
+    {
+      "case_id": "case_A04",
+      "label": "通过",
+      "template": "叙述式（结论在句末）",
+      "legacy_pred": "通过",
+      "correct": true
+    },
+    {
+      "case_id": "case_A05",
+      "label": "通过",
+      "template": "工具叙事式（动词通过在前）",
+      "legacy_pred": "通过",
+      "correct": true
+    },
+    {
+      "case_id": "case_A05",
+      "label": "通过",
+      "template": "合规陈述式（先否定风险后肯定）",
+      "legacy_pred": "不通过",
+      "correct": false
+    },
+    {
+      "case_id": "case_A05",
+      "label": "通过",
+      "template": "分点核验式（三项全通过）",
+      "legacy_pred": "通过",
+      "correct": true
+    },
+    {
+      "case_id": "case_A05",
+      "label": "通过",
+      "template": "条款查询式（通过查询开头）",
+      "legacy_pred": "通过",
+      "correct": true
+    },
+    {
+      "case_id": "case_A05",
+      "label": "通过",
+      "template": "叙述式（结论在句末）",
+      "legacy_pred": "通过",
+      "correct": true
+    },
+    {
+      "case_id": "case_A06",
+      "label": "不通过",
+      "template": "工具叙事式（动词通过在前）",
+      "legacy_pred": "通过",
+      "correct": false
+    },
+    {
+      "case_id": "case_A06",
+      "label": "不通过",
+      "template": "合规陈述式（先肯定后否定）",
+      "legacy_pred": "通过",
+      "correct": false
+    },
+    {
+      "case_id": "case_A06",
+      "label": "不通过",
+      "template": "分点核验式（前两项通过）",
+      "legacy_pred": "通过",
+      "correct": false
+    },
+    {
+      "case_id": "case_A06",
+      "label": "不通过",
+      "template": "条款查询式（通过查询开头）",
+      "legacy_pred": "通过",
+      "correct": false
+    },
+    {
+      "case_id": "case_A06",
+      "label": "不通过",
+      "template": "叙述式（结论在句末）",
+      "legacy_pred": "通过",
+      "correct": false
+    },
+    {
+      "case_id": "case_A07",
+      "label": "通过",
+      "template": "工具叙事式（动词通过在前）",
+      "legacy_pred": "通过",
+      "correct": true
+    },
+    {
+      "case_id": "case_A07",
+      "label": "通过",
+      "template": "合规陈述式（先否定风险后肯定）",
+      "legacy_pred": "不通过",
+      "correct": false
+    },
+    {
+      "case_id": "case_A07",
+      "label": "通过",
+      "template": "分点核验式（三项全通过）",
+      "legacy_pred": "通过",
+      "correct": true
+    },
+    {
+      "case_id": "case_A07",
+      "label": "通过",
+      "template": "条款查询式（通过查询开头）",
+      "legacy_pred": "通过",
+      "correct": true
+    },
+    {
+      "case_id": "case_A07",
+      "label": "通过",
+      "template": "叙述式（结论在句末）",
+      "legacy_pred": "通过",
+      "correct": true
+    },
+    {
+      "case_id": "case_A08",
+      "label": "通过",
+      "template": "工具叙事式（动词通过在前）",
+      "legacy_pred": "通过",
+      "correct": true
+    },
+    {
+      "case_id": "case_A08",
+      "label": "通过",
+      "template": "合规陈述式（先否定风险后肯定）",
+      "legacy_pred": "不通过",
+      "correct": false
+    },
+    {
+      "case_id": "case_A08",
+      "label": "通过",
+      "template": "分点核验式（三项全通过）",
+      "legacy_pred": "通过",
+      "correct": true
+    },
+    {
+      "case_id": "case_A08",
+      "label": "通过",
+      "template": "条款查询式（通过查询开头）",
+      "legacy_pred": "通过",
+      "correct": true
+    },
+    {
+      "case_id": "case_A08",
+      "label": "通过",
+      "template": "叙述式（结论在句末）",
+      "legacy_pred": "通过",
+      "correct": true
+    },
+    {
+      "case_id": "case_B01",
+      "label": "不通过",
+      "template": "工具叙事式（动词通过在前）",
+      "legacy_pred": "通过",
+      "correct": false
+    },
+    {
+      "case_id": "case_B01",
+      "label": "不通过",
+      "template": "合规陈述式（先肯定后否定）",
+      "legacy_pred": "通过",
+      "correct": false
+    },
+    {
+      "case_id": "case_B01",
+      "label": "不通过",
+      "template": "分点核验式（前两项通过）",
+      "legacy_pred": "通过",
+      "correct": false
+    },
+    {
+      "case_id": "case_B01",
+      "label": "不通过",
+      "template": "条款查询式（通过查询开头）",
+      "legacy_pred": "通过",
+      "correct": false
+    },
+    {
+      "case_id": "case_B01",
+      "label": "不通过",
+      "template": "叙述式（结论在句末）",
+      "legacy_pred": "通过",
+      "correct": false
+    },
+    {
+      "case_id": "case_B02",
+      "label": "不通过",
+      "template": "工具叙事式（动词通过在前）",
+      "legacy_pred": "通过",
+      "correct": false
+    },
+    {
+      "case_id": "case_B02",
+      "label": "不通过",
+      "template": "合规陈述式（先肯定后否定）",
+      "legacy_pred": "通过",
+      "correct": false
+    },
+    {
+      "case_id": "case_B02",
+      "label": "不通过",
+      "template": "分点核验式（前两项通过）",
+      "legacy_pred": "通过",
+      "correct": false
+    },
+    {
+      "case_id": "case_B02",
+      "label": "不通过",
+      "template": "条款查询式（通过查询开头）",
+      "legacy_pred": "通过",
+      "correct": false
+    },
+    {
+      "case_id": "case_B02",
+      "label": "不通过",
+      "template": "叙述式（结论在句末）",
+      "legacy_pred": "通过",
+      "correct": false
+    },
+    {
+      "case_id": "case_B03",
+      "label": "不通过",
+      "template": "工具叙事式（动词通过在前）",
+      "legacy_pred": "通过",
+      "correct": false
+    },
+    {
+      "case_id": "case_B03",
+      "label": "不通过",
+      "template": "合规陈述式（先肯定后否定）",
+      "legacy_pred": "通过",
+      "correct": false
+    },
+    {
+      "case_id": "case_B03",
+      "label": "不通过",
+      "template": "分点核验式（前两项通过）",
+      "legacy_pred": "通过",
+      "correct": false
+    },
+    {
+      "case_id": "case_B03",
+      "label": "不通过",
+      "template": "条款查询式（通过查询开头）",
+      "legacy_pred": "通过",
+      "correct": false
+    },
+    {
+      "case_id": "case_B03",
+      "label": "不通过",
+      "template": "叙述式（结论在句末）",
+      "legacy_pred": "通过",
+      "correct": false
+    },
+    {
+      "case_id": "case_B04",
+      "label": "不通过",
+      "template": "工具叙事式（动词通过在前）",
+      "legacy_pred": "通过",
+      "correct": false
+    },
+    {
+      "case_id": "case_B04",
+      "label": "不通过",
+      "template": "合规陈述式（先肯定后否定）",
+      "legacy_pred": "通过",
+      "correct": false
+    },
+    {
+      "case_id": "case_B04",
+      "label": "不通过",
+      "template": "分点核验式（前两项通过）",
+      "legacy_pred": "通过",
+      "correct": false
+    },
+    {
+      "case_id": "case_B04",
+      "label": "不通过",
+      "template": "条款查询式（通过查询开头）",
+      "legacy_pred": "通过",
+      "correct": false
+    },
+    {
+      "case_id": "case_B04",
+      "label": "不通过",
+      "template": "叙述式（结论在句末）",
+      "legacy_pred": "通过",
+      "correct": false
+    },
+    {
+      "case_id": "case_B05",
+      "label": "不通过",
+      "template": "工具叙事式（动词通过在前）",
+      "legacy_pred": "通过",
+      "correct": false
+    },
+    {
+      "case_id": "case_B05",
+      "label": "不通过",
+      "template": "合规陈述式（先肯定后否定）",
+      "legacy_pred": "通过",
+      "correct": false
+    },
+    {
+      "case_id": "case_B05",
+      "label": "不通过",
+      "template": "分点核验式（前两项通过）",
+      "legacy_pred": "通过",
+      "correct": false
+    },
+    {
+      "case_id": "case_B05",
+      "label": "不通过",
+      "template": "条款查询式（通过查询开头）",
+      "legacy_pred": "通过",
+      "correct": false
+    },
+    {
+      "case_id": "case_B05",
+      "label": "不通过",
+      "template": "叙述式（结论在句末）",
+      "legacy_pred": "通过",
+      "correct": false
+    },
+    {
+      "case_id": "case_B06",
+      "label": "通过",
+      "template": "工具叙事式（动词通过在前）",
+      "legacy_pred": "通过",
+      "correct": true
+    },
+    {
+      "case_id": "case_B06",
+      "label": "通过",
+      "template": "合规陈述式（先否定风险后肯定）",
+      "legacy_pred": "不通过",
+      "correct": false
+    },
+    {
+      "case_id": "case_B06",
+      "label": "通过",
+      "template": "分点核验式（三项全通过）",
+      "legacy_pred": "通过",
+      "correct": true
+    },
+    {
+      "case_id": "case_B06",
+      "label": "通过",
+      "template": "条款查询式（通过查询开头）",
+      "legacy_pred": "通过",
+      "correct": true
+    },
+    {
+      "case_id": "case_B06",
+      "label": "通过",
+      "template": "叙述式（结论在句末）",
+      "legacy_pred": "通过",
+      "correct": true
+    },
+    {
+      "case_id": "case_B07",
+      "label": "不通过",
+      "template": "工具叙事式（动词通过在前）",
+      "legacy_pred": "通过",
+      "correct": false
+    },
+    {
+      "case_id": "case_B07",
+      "label": "不通过",
+      "template": "合规陈述式（先肯定后否定）",
+      "legacy_pred": "通过",
+      "correct": false
+    },
+    {
+      "case_id": "case_B07",
+      "label": "不通过",
+      "template": "分点核验式（前两项通过）",
+      "legacy_pred": "通过",
+      "correct": false
+    },
+    {
+      "case_id": "case_B07",
+      "label": "不通过",
+      "template": "条款查询式（通过查询开头）",
+      "legacy_pred": "通过",
+      "correct": false
+    },
+    {
+      "case_id": "case_B07",
+      "label": "不通过",
+      "template": "叙述式（结论在句末）",
+      "legacy_pred": "通过",
+      "correct": false
+    },
+    {
+      "case_id": "case_B08",
+      "label": "通过",
+      "template": "工具叙事式（动词通过在前）",
+      "legacy_pred": "通过",
+      "correct": true
+    },
+    {
+      "case_id": "case_B08",
+      "label": "通过",
+      "template": "合规陈述式（先否定风险后肯定）",
+      "legacy_pred": "不通过",
+      "correct": false
+    },
+    {
+      "case_id": "case_B08",
+      "label": "通过",
+      "template": "分点核验式（三项全通过）",
+      "legacy_pred": "通过",
+      "correct": true
+    },
+    {
+      "case_id": "case_B08",
+      "label": "通过",
+      "template": "条款查询式（通过查询开头）",
+      "legacy_pred": "通过",
+      "correct": true
+    },
+    {
+      "case_id": "case_B08",
+      "label": "通过",
+      "template": "叙述式（结论在句末）",
+      "legacy_pred": "通过",
+      "correct": true
+    },
+    {
+      "case_id": "case_B09",
+      "label": "不通过",
+      "template": "工具叙事式（动词通过在前）",
+      "legacy_pred": "通过",
+      "correct": false
+    },
+    {
+      "case_id": "case_B09",
+      "label": "不通过",
+      "template": "合规陈述式（先肯定后否定）",
+      "legacy_pred": "通过",
+      "correct": false
+    },
+    {
+      "case_id": "case_B09",
+      "label": "不通过",
+      "template": "分点核验式（前两项通过）",
+      "legacy_pred": "通过",
+      "correct": false
+    },
+    {
+      "case_id": "case_B09",
+      "label": "不通过",
+      "template": "条款查询式（通过查询开头）",
+      "legacy_pred": "通过",
+      "correct": false
+    },
+    {
+      "case_id": "case_B09",
+      "label": "不通过",
+      "template": "叙述式（结论在句末）",
+      "legacy_pred": "通过",
+      "correct": false
+    },
+    {
+      "case_id": "case_B10",
+      "label": "通过",
+      "template": "工具叙事式（动词通过在前）",
+      "legacy_pred": "通过",
+      "correct": true
+    },
+    {
+      "case_id": "case_B10",
+      "label": "通过",
+      "template": "合规陈述式（先否定风险后肯定）",
+      "legacy_pred": "不通过",
+      "correct": false
+    },
+    {
+      "case_id": "case_B10",
+      "label": "通过",
+      "template": "分点核验式（三项全通过）",
+      "legacy_pred": "通过",
+      "correct": true
+    },
+    {
+      "case_id": "case_B10",
+      "label": "通过",
+      "template": "条款查询式（通过查询开头）",
+      "legacy_pred": "通过",
+      "correct": true
+    },
+    {
+      "case_id": "case_B10",
+      "label": "通过",
+      "template": "叙述式（结论在句末）",
+      "legacy_pred": "通过",
+      "correct": true
+    },
+    {
+      "case_id": "case_B11",
+      "label": "通过",
+      "template": "工具叙事式（动词通过在前）",
+      "legacy_pred": "通过",
+      "correct": true
+    },
+    {
+      "case_id": "case_B11",
+      "label": "通过",
+      "template": "合规陈述式（先否定风险后肯定）",
+      "legacy_pred": "不通过",
+      "correct": false
+    },
+    {
+      "case_id": "case_B11",
+      "label": "通过",
+      "template": "分点核验式（三项全通过）",
+      "legacy_pred": "通过",
+      "correct": true
+    },
+    {
+      "case_id": "case_B11",
+      "label": "通过",
+      "template": "条款查询式（通过查询开头）",
+      "legacy_pred": "通过",
+      "correct": true
+    },
+    {
+      "case_id": "case_B11",
+      "label": "通过",
+      "template": "叙述式（结论在句末）",
+      "legacy_pred": "通过",
+      "correct": true
+    },
+    {
+      "case_id": "case_B12",
+      "label": "通过",
+      "template": "工具叙事式（动词通过在前）",
+      "legacy_pred": "通过",
+      "correct": true
+    },
+    {
+      "case_id": "case_B12",
+      "label": "通过",
+      "template": "合规陈述式（先否定风险后肯定）",
+      "legacy_pred": "不通过",
+      "correct": false
+    },
+    {
+      "case_id": "case_B12",
+      "label": "通过",
+      "template": "分点核验式（三项全通过）",
+      "legacy_pred": "通过",
+      "correct": true
+    },
+    {
+      "case_id": "case_B12",
+      "label": "通过",
+      "template": "条款查询式（通过查询开头）",
+      "legacy_pred": "通过",
+      "correct": true
+    },
+    {
+      "case_id": "case_B12",
+      "label": "通过",
+      "template": "叙述式（结论在句末）",
+      "legacy_pred": "通过",
+      "correct": true
+    },
+    {
+      "case_id": "case_T01",
+      "label": "不通过",
+      "template": "工具叙事式（动词通过在前）",
+      "legacy_pred": "通过",
+      "correct": false
+    },
+    {
+      "case_id": "case_T01",
+      "label": "不通过",
+      "template": "合规陈述式（先肯定后否定）",
+      "legacy_pred": "通过",
+      "correct": false
+    },
+    {
+      "case_id": "case_T01",
+      "label": "不通过",
+      "template": "分点核验式（前两项通过）",
+      "legacy_pred": "通过",
+      "correct": false
+    },
+    {
+      "case_id": "case_T01",
+      "label": "不通过",
+      "template": "条款查询式（通过查询开头）",
+      "legacy_pred": "通过",
+      "correct": false
+    },
+    {
+      "case_id": "case_T01",
+      "label": "不通过",
+      "template": "叙述式（结论在句末）",
+      "legacy_pred": "通过",
+      "correct": false
+    },
+    {
+      "case_id": "case_T02",
+      "label": "不通过",
+      "template": "工具叙事式（动词通过在前）",
+      "legacy_pred": "通过",
+      "correct": false
+    },
+    {
+      "case_id": "case_T02",
+      "label": "不通过",
+      "template": "合规陈述式（先肯定后否定）",
+      "legacy_pred": "通过",
+      "correct": false
+    },
+    {
+      "case_id": "case_T02",
+      "label": "不通过",
+      "template": "分点核验式（前两项通过）",
+      "legacy_pred": "通过",
+      "correct": false
+    },
+    {
+      "case_id": "case_T02",
+      "label": "不通过",
+      "template": "条款查询式（通过查询开头）",
+      "legacy_pred": "通过",
+      "correct": false
+    },
+    {
+      "case_id": "case_T02",
+      "label": "不通过",
+      "template": "叙述式（结论在句末）",
+      "legacy_pred": "通过",
+      "correct": false
+    },
+    {
+      "case_id": "case_T03",
+      "label": "不通过",
+      "template": "工具叙事式（动词通过在前）",
+      "legacy_pred": "通过",
+      "correct": false
+    },
+    {
+      "case_id": "case_T03",
+      "label": "不通过",
+      "template": "合规陈述式（先肯定后否定）",
+      "legacy_pred": "通过",
+      "correct": false
+    },
+    {
+      "case_id": "case_T03",
+      "label": "不通过",
+      "template": "分点核验式（前两项通过）",
+      "legacy_pred": "通过",
+      "correct": false
+    },
+    {
+      "case_id": "case_T03",
+      "label": "不通过",
+      "template": "条款查询式（通过查询开头）",
+      "legacy_pred": "通过",
+      "correct": false
+    },
+    {
+      "case_id": "case_T03",
+      "label": "不通过",
+      "template": "叙述式（结论在句末）",
+      "legacy_pred": "通过",
+      "correct": false
+    },
+    {
+      "case_id": "case_T04",
+      "label": "不通过",
+      "template": "工具叙事式（动词通过在前）",
+      "legacy_pred": "通过",
+      "correct": false
+    },
+    {
+      "case_id": "case_T04",
+      "label": "不通过",
+      "template": "合规陈述式（先肯定后否定）",
+      "legacy_pred": "通过",
+      "correct": false
+    },
+    {
+      "case_id": "case_T04",
+      "label": "不通过",
+      "template": "分点核验式（前两项通过）",
+      "legacy_pred": "通过",
+      "correct": false
+    },
+    {
+      "case_id": "case_T04",
+      "label": "不通过",
+      "template": "条款查询式（通过查询开头）",
+      "legacy_pred": "通过",
+      "correct": false
+    },
+    {
+      "case_id": "case_T04",
+      "label": "不通过",
+      "template": "叙述式（结论在句末）",
+      "legacy_pred": "通过",
+      "correct": false
+    }
+  ],
+  "negation": {
+    "desc": "否定嵌套句（双重否定 / 否定动词+通过）",
+    "variant_per_case": 4,
+    "variant_count": 96,
+    "D_on_negation": {
+      "correct": 0,
+      "total": 96,
+      "accuracy": 0.0
+    },
+    "error_directions": {
+      "false_pass_count": 56,
+      "false_pass_rate": 1.0,
+      "false_block_count": 40,
+      "false_block_rate": 1.0
+    },
+    "per_template": {
+      "否定嵌套式·不存在不通过情形": {
+        "correct": 0,
+        "total": 10,
+        "accuracy": 0.0
+      },
+      "否定嵌套式·未发现不通过依据": {
+        "correct": 0,
+        "total": 10,
+        "accuracy": 0.0
+      },
+      "否定嵌套式·并非不通过": {
+        "correct": 0,
+        "total": 10,
+        "accuracy": 0.0
+      },
+      "否定嵌套式·无审核不通过理由": {
+        "correct": 0,
+        "total": 10,
+        "accuracy": 0.0
+      },
+      "否定嵌套式·不予通过": {
+        "correct": 0,
+        "total": 14,
+        "accuracy": 0.0
+      },
+      "否定嵌套式·无法通过": {
+        "correct": 0,
+        "total": 14,
+        "accuracy": 0.0
+      },
+      "否定嵌套式·不能予以通过": {
+        "correct": 0,
+        "total": 14,
+        "accuracy": 0.0
+      },
+      "否定嵌套式·不应通过": {
+        "correct": 0,
+        "total": 14,
+        "accuracy": 0.0
+      }
+    },
+    "fail_cases": [
+      {
+        "case_id": "case_A01",
+        "label": "通过",
+        "template": "否定嵌套式·不存在不通过情形",
+        "legacy_pred": "不通过"
+      },
+      {
+        "case_id": "case_A01",
+        "label": "通过",
+        "template": "否定嵌套式·未发现不通过依据",
+        "legacy_pred": "不通过"
+      },
+      {
+        "case_id": "case_A01",
+        "label": "通过",
+        "template": "否定嵌套式·并非不通过",
+        "legacy_pred": "不通过"
+      },
+      {
+        "case_id": "case_A01",
+        "label": "通过",
+        "template": "否定嵌套式·无审核不通过理由",
+        "legacy_pred": "不通过"
+      },
+      {
+        "case_id": "case_A02",
+        "label": "不通过",
+        "template": "否定嵌套式·不予通过",
+        "legacy_pred": "通过"
+      },
+      {
+        "case_id": "case_A02",
+        "label": "不通过",
+        "template": "否定嵌套式·无法通过",
+        "legacy_pred": "通过"
+      },
+      {
+        "case_id": "case_A02",
+        "label": "不通过",
+        "template": "否定嵌套式·不能予以通过",
+        "legacy_pred": "通过"
+      },
+      {
+        "case_id": "case_A02",
+        "label": "不通过",
+        "template": "否定嵌套式·不应通过",
+        "legacy_pred": "通过"
+      },
+      {
+        "case_id": "case_A03",
+        "label": "不通过",
+        "template": "否定嵌套式·不予通过",
+        "legacy_pred": "通过"
+      },
+      {
+        "case_id": "case_A03",
+        "label": "不通过",
+        "template": "否定嵌套式·无法通过",
+        "legacy_pred": "通过"
+      },
+      {
+        "case_id": "case_A03",
+        "label": "不通过",
+        "template": "否定嵌套式·不能予以通过",
+        "legacy_pred": "通过"
+      },
+      {
+        "case_id": "case_A03",
+        "label": "不通过",
+        "template": "否定嵌套式·不应通过",
+        "legacy_pred": "通过"
+      },
+      {
+        "case_id": "case_A04",
+        "label": "通过",
+        "template": "否定嵌套式·不存在不通过情形",
+        "legacy_pred": "不通过"
+      },
+      {
+        "case_id": "case_A04",
+        "label": "通过",
+        "template": "否定嵌套式·未发现不通过依据",
+        "legacy_pred": "不通过"
+      },
+      {
+        "case_id": "case_A04",
+        "label": "通过",
+        "template": "否定嵌套式·并非不通过",
+        "legacy_pred": "不通过"
+      },
+      {
+        "case_id": "case_A04",
+        "label": "通过",
+        "template": "否定嵌套式·无审核不通过理由",
+        "legacy_pred": "不通过"
+      },
+      {
+        "case_id": "case_A05",
+        "label": "通过",
+        "template": "否定嵌套式·不存在不通过情形",
+        "legacy_pred": "不通过"
+      },
+      {
+        "case_id": "case_A05",
+        "label": "通过",
+        "template": "否定嵌套式·未发现不通过依据",
+        "legacy_pred": "不通过"
+      },
+      {
+        "case_id": "case_A05",
+        "label": "通过",
+        "template": "否定嵌套式·并非不通过",
+        "legacy_pred": "不通过"
+      },
+      {
+        "case_id": "case_A05",
+        "label": "通过",
+        "template": "否定嵌套式·无审核不通过理由",
+        "legacy_pred": "不通过"
+      },
+      {
+        "case_id": "case_A06",
+        "label": "不通过",
+        "template": "否定嵌套式·不予通过",
+        "legacy_pred": "通过"
+      },
+      {
+        "case_id": "case_A06",
+        "label": "不通过",
+        "template": "否定嵌套式·无法通过",
+        "legacy_pred": "通过"
+      },
+      {
+        "case_id": "case_A06",
+        "label": "不通过",
+        "template": "否定嵌套式·不能予以通过",
+        "legacy_pred": "通过"
+      },
+      {
+        "case_id": "case_A06",
+        "label": "不通过",
+        "template": "否定嵌套式·不应通过",
+        "legacy_pred": "通过"
+      },
+      {
+        "case_id": "case_A07",
+        "label": "通过",
+        "template": "否定嵌套式·不存在不通过情形",
+        "legacy_pred": "不通过"
+      },
+      {
+        "case_id": "case_A07",
+        "label": "通过",
+        "template": "否定嵌套式·未发现不通过依据",
+        "legacy_pred": "不通过"
+      },
+      {
+        "case_id": "case_A07",
+        "label": "通过",
+        "template": "否定嵌套式·并非不通过",
+        "legacy_pred": "不通过"
+      },
+      {
+        "case_id": "case_A07",
+        "label": "通过",
+        "template": "否定嵌套式·无审核不通过理由",
+        "legacy_pred": "不通过"
+      },
+      {
+        "case_id": "case_A08",
+        "label": "通过",
+        "template": "否定嵌套式·不存在不通过情形",
+        "legacy_pred": "不通过"
+      },
+      {
+        "case_id": "case_A08",
+        "label": "通过",
+        "template": "否定嵌套式·未发现不通过依据",
+        "legacy_pred": "不通过"
+      },
+      {
+        "case_id": "case_A08",
+        "label": "通过",
+        "template": "否定嵌套式·并非不通过",
+        "legacy_pred": "不通过"
+      },
+      {
+        "case_id": "case_A08",
+        "label": "通过",
+        "template": "否定嵌套式·无审核不通过理由",
+        "legacy_pred": "不通过"
+      },
+      {
+        "case_id": "case_B01",
+        "label": "不通过",
+        "template": "否定嵌套式·不予通过",
+        "legacy_pred": "通过"
+      },
+      {
+        "case_id": "case_B01",
+        "label": "不通过",
+        "template": "否定嵌套式·无法通过",
+        "legacy_pred": "通过"
+      },
+      {
+        "case_id": "case_B01",
+        "label": "不通过",
+        "template": "否定嵌套式·不能予以通过",
+        "legacy_pred": "通过"
+      },
+      {
+        "case_id": "case_B01",
+        "label": "不通过",
+        "template": "否定嵌套式·不应通过",
+        "legacy_pred": "通过"
+      },
+      {
+        "case_id": "case_B02",
+        "label": "不通过",
+        "template": "否定嵌套式·不予通过",
+        "legacy_pred": "通过"
+      },
+      {
+        "case_id": "case_B02",
+        "label": "不通过",
+        "template": "否定嵌套式·无法通过",
+        "legacy_pred": "通过"
+      },
+      {
+        "case_id": "case_B02",
+        "label": "不通过",
+        "template": "否定嵌套式·不能予以通过",
+        "legacy_pred": "通过"
+      },
+      {
+        "case_id": "case_B02",
+        "label": "不通过",
+        "template": "否定嵌套式·不应通过",
+        "legacy_pred": "通过"
+      },
+      {
+        "case_id": "case_B03",
+        "label": "不通过",
+        "template": "否定嵌套式·不予通过",
+        "legacy_pred": "通过"
+      },
+      {
+        "case_id": "case_B03",
+        "label": "不通过",
+        "template": "否定嵌套式·无法通过",
+        "legacy_pred": "通过"
+      },
+      {
+        "case_id": "case_B03",
+        "label": "不通过",
+        "template": "否定嵌套式·不能予以通过",
+        "legacy_pred": "通过"
+      },
+      {
+        "case_id": "case_B03",
+        "label": "不通过",
+        "template": "否定嵌套式·不应通过",
+        "legacy_pred": "通过"
+      },
+      {
+        "case_id": "case_B04",
+        "label": "不通过",
+        "template": "否定嵌套式·不予通过",
+        "legacy_pred": "通过"
+      },
+      {
+        "case_id": "case_B04",
+        "label": "不通过",
+        "template": "否定嵌套式·无法通过",
+        "legacy_pred": "通过"
+      },
+      {
+        "case_id": "case_B04",
+        "label": "不通过",
+        "template": "否定嵌套式·不能予以通过",
+        "legacy_pred": "通过"
+      },
+      {
+        "case_id": "case_B04",
+        "label": "不通过",
+        "template": "否定嵌套式·不应通过",
+        "legacy_pred": "通过"
+      },
+      {
+        "case_id": "case_B05",
+        "label": "不通过",
+        "template": "否定嵌套式·不予通过",
+        "legacy_pred": "通过"
+      },
+      {
+        "case_id": "case_B05",
+        "label": "不通过",
+        "template": "否定嵌套式·无法通过",
+        "legacy_pred": "通过"
+      },
+      {
+        "case_id": "case_B05",
+        "label": "不通过",
+        "template": "否定嵌套式·不能予以通过",
+        "legacy_pred": "通过"
+      },
+      {
+        "case_id": "case_B05",
+        "label": "不通过",
+        "template": "否定嵌套式·不应通过",
+        "legacy_pred": "通过"
+      },
+      {
+        "case_id": "case_B06",
+        "label": "通过",
+        "template": "否定嵌套式·不存在不通过情形",
+        "legacy_pred": "不通过"
+      },
+      {
+        "case_id": "case_B06",
+        "label": "通过",
+        "template": "否定嵌套式·未发现不通过依据",
+        "legacy_pred": "不通过"
+      },
+      {
+        "case_id": "case_B06",
+        "label": "通过",
+        "template": "否定嵌套式·并非不通过",
+        "legacy_pred": "不通过"
+      },
+      {
+        "case_id": "case_B06",
+        "label": "通过",
+        "template": "否定嵌套式·无审核不通过理由",
+        "legacy_pred": "不通过"
+      },
+      {
+        "case_id": "case_B07",
+        "label": "不通过",
+        "template": "否定嵌套式·不予通过",
+        "legacy_pred": "通过"
+      },
+      {
+        "case_id": "case_B07",
+        "label": "不通过",
+        "template": "否定嵌套式·无法通过",
+        "legacy_pred": "通过"
+      },
+      {
+        "case_id": "case_B07",
+        "label": "不通过",
+        "template": "否定嵌套式·不能予以通过",
+        "legacy_pred": "通过"
+      },
+      {
+        "case_id": "case_B07",
+        "label": "不通过",
+        "template": "否定嵌套式·不应通过",
+        "legacy_pred": "通过"
+      },
+      {
+        "case_id": "case_B08",
+        "label": "通过",
+        "template": "否定嵌套式·不存在不通过情形",
+        "legacy_pred": "不通过"
+      },
+      {
+        "case_id": "case_B08",
+        "label": "通过",
+        "template": "否定嵌套式·未发现不通过依据",
+        "legacy_pred": "不通过"
+      },
+      {
+        "case_id": "case_B08",
+        "label": "通过",
+        "template": "否定嵌套式·并非不通过",
+        "legacy_pred": "不通过"
+      },
+      {
+        "case_id": "case_B08",
+        "label": "通过",
+        "template": "否定嵌套式·无审核不通过理由",
+        "legacy_pred": "不通过"
+      },
+      {
+        "case_id": "case_B09",
+        "label": "不通过",
+        "template": "否定嵌套式·不予通过",
+        "legacy_pred": "通过"
+      },
+      {
+        "case_id": "case_B09",
+        "label": "不通过",
+        "template": "否定嵌套式·无法通过",
+        "legacy_pred": "通过"
+      },
+      {
+        "case_id": "case_B09",
+        "label": "不通过",
+        "template": "否定嵌套式·不能予以通过",
+        "legacy_pred": "通过"
+      },
+      {
+        "case_id": "case_B09",
+        "label": "不通过",
+        "template": "否定嵌套式·不应通过",
+        "legacy_pred": "通过"
+      },
+      {
+        "case_id": "case_B10",
+        "label": "通过",
+        "template": "否定嵌套式·不存在不通过情形",
+        "legacy_pred": "不通过"
+      },
+      {
+        "case_id": "case_B10",
+        "label": "通过",
+        "template": "否定嵌套式·未发现不通过依据",
+        "legacy_pred": "不通过"
+      },
+      {
+        "case_id": "case_B10",
+        "label": "通过",
+        "template": "否定嵌套式·并非不通过",
+        "legacy_pred": "不通过"
+      },
+      {
+        "case_id": "case_B10",
+        "label": "通过",
+        "template": "否定嵌套式·无审核不通过理由",
+        "legacy_pred": "不通过"
+      },
+      {
+        "case_id": "case_B11",
+        "label": "通过",
+        "template": "否定嵌套式·不存在不通过情形",
+        "legacy_pred": "不通过"
+      },
+      {
+        "case_id": "case_B11",
+        "label": "通过",
+        "template": "否定嵌套式·未发现不通过依据",
+        "legacy_pred": "不通过"
+      },
+      {
+        "case_id": "case_B11",
+        "label": "通过",
+        "template": "否定嵌套式·并非不通过",
+        "legacy_pred": "不通过"
+      },
+      {
+        "case_id": "case_B11",
+        "label": "通过",
+        "template": "否定嵌套式·无审核不通过理由",
+        "legacy_pred": "不通过"
+      },
+      {
+        "case_id": "case_B12",
+        "label": "通过",
+        "template": "否定嵌套式·不存在不通过情形",
+        "legacy_pred": "不通过"
+      },
+      {
+        "case_id": "case_B12",
+        "label": "通过",
+        "template": "否定嵌套式·未发现不通过依据",
+        "legacy_pred": "不通过"
+      },
+      {
+        "case_id": "case_B12",
+        "label": "通过",
+        "template": "否定嵌套式·并非不通过",
+        "legacy_pred": "不通过"
+      },
+      {
+        "case_id": "case_B12",
+        "label": "通过",
+        "template": "否定嵌套式·无审核不通过理由",
+        "legacy_pred": "不通过"
+      },
+      {
+        "case_id": "case_T01",
+        "label": "不通过",
+        "template": "否定嵌套式·不予通过",
+        "legacy_pred": "通过"
+      },
+      {
+        "case_id": "case_T01",
+        "label": "不通过",
+        "template": "否定嵌套式·无法通过",
+        "legacy_pred": "通过"
+      },
+      {
+        "case_id": "case_T01",
+        "label": "不通过",
+        "template": "否定嵌套式·不能予以通过",
+        "legacy_pred": "通过"
+      },
+      {
+        "case_id": "case_T01",
+        "label": "不通过",
+        "template": "否定嵌套式·不应通过",
+        "legacy_pred": "通过"
+      },
+      {
+        "case_id": "case_T02",
+        "label": "不通过",
+        "template": "否定嵌套式·不予通过",
+        "legacy_pred": "通过"
+      },
+      {
+        "case_id": "case_T02",
+        "label": "不通过",
+        "template": "否定嵌套式·无法通过",
+        "legacy_pred": "通过"
+      },
+      {
+        "case_id": "case_T02",
+        "label": "不通过",
+        "template": "否定嵌套式·不能予以通过",
+        "legacy_pred": "通过"
+      },
+      {
+        "case_id": "case_T02",
+        "label": "不通过",
+        "template": "否定嵌套式·不应通过",
+        "legacy_pred": "通过"
+      },
+      {
+        "case_id": "case_T03",
+        "label": "不通过",
+        "template": "否定嵌套式·不予通过",
+        "legacy_pred": "通过"
+      },
+      {
+        "case_id": "case_T03",
+        "label": "不通过",
+        "template": "否定嵌套式·无法通过",
+        "legacy_pred": "通过"
+      },
+      {
+        "case_id": "case_T03",
+        "label": "不通过",
+        "template": "否定嵌套式·不能予以通过",
+        "legacy_pred": "通过"
+      },
+      {
+        "case_id": "case_T03",
+        "label": "不通过",
+        "template": "否定嵌套式·不应通过",
+        "legacy_pred": "通过"
+      },
+      {
+        "case_id": "case_T04",
+        "label": "不通过",
+        "template": "否定嵌套式·不予通过",
+        "legacy_pred": "通过"
+      },
+      {
+        "case_id": "case_T04",
+        "label": "不通过",
+        "template": "否定嵌套式·无法通过",
+        "legacy_pred": "通过"
+      },
+      {
+        "case_id": "case_T04",
+        "label": "不通过",
+        "template": "否定嵌套式·不能予以通过",
+        "legacy_pred": "通过"
+      },
+      {
+        "case_id": "case_T04",
+        "label": "不通过",
+        "template": "否定嵌套式·不应通过",
+        "legacy_pred": "通过"
+      }
+    ]
+  }
+}

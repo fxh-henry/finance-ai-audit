@@ -1,0 +1,150 @@
+{
+  "case_id": "case_B09",
+  "source": "报销单一致性",
+  "note": "发票备注写明入离店共1晚、金额450元，报销单却填「住宿3晚」。金额在标准内（450<=500），只有把票面备注和报销单口径对起来才能发现",
+  "label": "不通过",
+  "label_reason": "制度第十四条 说明4 住宿天数按实际入住天数计算；票面备注为1晚，报销单填3晚，住宿天数与票据不符（第三条1 真实性原则）",
+  "is_adversarial": true,
+  "employee_id": 2,
+  "employee_level": "部门经理",
+  "invoice_data": {
+    "发票类型": "电子发票（普通发票）",
+    "发票种类": "增值税普通发票",
+    "发票号码": "26990000000000000017",
+    "开票日期": "2026年09月23日",
+    "购买方名称": "苏州城市学院",
+    "购买方税号": "12320500MB1F99368P",
+    "销售方名称": "去哪儿网（天津）国际旅行社有限公司武清分公司",
+    "销售方税号": "91120222MA82BC2U42",
+    "不含税金额": "424.53",
+    "税额": "25.47",
+    "税率": "6%",
+    "价税合计小写": "450.00",
+    "价税合计大写": "肆佰伍拾圆整",
+    "开票人": "邢婕",
+    "备注": "酒店名称：如家酒店(上海人民广场店) 入离店日期：2026-09-14至2026-09-15 共1晚",
+    "项目名称": "*生产生活服务*代订房费",
+    "明细列表": [
+      {
+        "项目名称": "*生产生活服务*代订房费",
+        "规格型号": "",
+        "单位": "次",
+        "数量": "1",
+        "单价": "424.53",
+        "金额": "424.53",
+        "税率": "6%",
+        "税额": "25.47"
+      }
+    ]
+  },
+  "expense_form": {
+    "expense_type": "住宿费",
+    "trip_no": "TRIP-EVAL-B09",
+    "occur_date": "2026-09-14",
+    "reason": "赴上海出差住宿3晚",
+    "total_amount": 450.0,
+    "participants": "李四",
+    "ext_fields": {
+      "city": "上海",
+      "nights": 3,
+      "rooms": 1,
+      "guests": 1,
+      "guest_names": "李四"
+    },
+    "detail_items": []
+  },
+  "anomaly_result": {
+    "has_risk": false,
+    "risk_count": 0,
+    "risk_items": [],
+    "all_results": {
+      "duplicate": {
+        "is_duplicate": false,
+        "previous_records": [],
+        "message": "发票号码 26990000000000000017 无重复报销记录（已驳回/待审核的单据不计入）"
+      },
+      "consecutive": {
+        "is_consecutive": false,
+        "consecutive_count": 0,
+        "consecutive_invoices": [],
+        "message": "日期格式错误"
+      },
+      "split": {
+        "is_suspected_split": false,
+        "related_invoices": [],
+        "total_sum": 450.0,
+        "threshold": 0,
+        "message": "未检测到拆分报销特征"
+      },
+      "amount_threshold": {
+        "is_critical": false,
+        "near_threshold": 0,
+        "gap": 0,
+        "ratio": 0,
+        "message": "金额未接近任何审批阈值"
+      },
+      "high_frequency": {
+        "is_abnormal": false,
+        "employee_count": 0,
+        "employee_total": 0,
+        "dept_avg_count": 4.0,
+        "dept_avg_total": 10146.72,
+        "count_ratio": 0.0,
+        "amount_ratio": 0.0,
+        "message": "近30天报销0次、0.00元，处于部门正常水平"
+      },
+      "behavior_profile": {
+        "total_count": 0,
+        "total_amount": 0,
+        "expense_type_dist": {},
+        "top_sellers": [],
+        "pass_rate": 0,
+        "avg_amount": 0,
+        "last_reimburse_date": "无记录",
+        "message": "近90天共报销0次，总金额0.00元，通过率0.0%"
+      }
+    }
+  },
+  "answer": "",
+  "structured": {},
+  "trace": {
+    "steps": [],
+    "final_answer": "",
+    "structured": {},
+    "error": "Error code: 403 - {'error': {'message': 'Access to model denied. Please make sure you are eligible for using the model.', 'id': '69c612ae-e28b-9046-bb19-bcaaaa3dd0ab', 'type': 'AccessDenied.Unpurchased', 'code': 'AccessDenied.Unpurchased'}}"
+  },
+  "guard_report": {
+    "original_verdict": null,
+    "final_verdict": "不通过",
+    "overridden": false,
+    "errors": [
+      "结论取值非法：None，只能是「通过」或「不通过」"
+    ],
+    "warnings": [
+      "模型自评置信度偏低（0.50），建议人工复核"
+    ]
+  },
+  "reflection": {
+    "enabled": true,
+    "triggered": true,
+    "signals": [
+      {
+        "name": "置信度水平",
+        "level": "warn",
+        "detail": "置信度 0.50 偏低"
+      }
+    ],
+    "second_answer": "",
+    "second_structured": {},
+    "second_trace": {
+      "steps": [],
+      "final_answer": "",
+      "structured": {},
+      "error": "Error code: 403 - {'error': {'message': 'Access to model denied. Please make sure you are eligible for using the model.', 'id': '34a21d07-fa55-9c35-8c13-da430652432c', 'type': 'AccessDenied.Unpurchased', 'code': 'AccessDenied.Unpurchased'}}"
+    }
+  },
+  "meta": {
+    "elapsed_sec": 0.3,
+    "model": "qwen3.8-max"
+  }
+}

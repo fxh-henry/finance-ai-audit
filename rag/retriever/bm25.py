@@ -5,7 +5,11 @@ import os
 from rag.utils import get_text_hash, DEFAULT_CACHE_DIR, get_cache_path, save_json, load_json, json_cache, success
 
 # 添加项目根目录到模块搜索路径
-project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+# 注意：本文件在 rag/retriever/ 下，所以要向上三层才是项目根（rag/retriever → rag → 项目根）。
+# 原先只向上了两层，拿到的是 rag/ 目录，再 insert(0) 到 sys.path 最前面，
+# 会让顶层的 utils 包被 rag/utils 顶掉，导致
+# 「from utils.file_utils import ...」报 ModuleNotFoundError。
+project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 if project_root not in sys.path:
     sys.path.insert(0, project_root)
 

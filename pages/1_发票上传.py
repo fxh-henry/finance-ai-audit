@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
-"""发票上传：上传发票 → 自动识别 → 基础合规校验（不调用Agent）→ 四个后续操作入口"""
-import hashlib  # 用来给上传的文件算指纹，判断用户是否换了文件
+"""发票上传：一次可选多张 → 逐张识别 + 基础合规校验（不调用Agent）→ 折叠卡片逐张操作"""
+import hashlib  # 用来给上传的每个文件算指纹，判断哪些是新文件
 import importlib  # 用来重新加载模块，避免 Streamlit 热重载时用到旧代码
+import os  # 用来取文件扩展名（临时文件后缀用）
 import tempfile  # 用来生成临时文件（识别接口需要一个磁盘路径）
 from datetime import datetime  # 用来记录校验时间
 
@@ -17,7 +18,56 @@ _db = importlib.reload(_db)  # 强制重新加载 db 模块，保证用的是最
 save_invoice_to_folder = _db.save_invoice_to_folder  # 取出“保存发票到票夹”的函数备用
 
 
-def build_audit_record(result, agent_answer=None):
+# ============================================================================
+# 档位定义：把每张发票归到 4 档之一。档位数字越小越需要用户关注，列表里越靠上
+#   0 = 识别失败       （系统连字段都没读出来）
+#   1 = 基础校验不通过 （12 项里有 error，不能填报销单）
+#   2 = 通过但有警告   （没有 error 但有 warning，可以填报销单但要留意）
+#   3 = 完全通过
+# ============================================================================
+TIER_ICON = {0: "⛔", 1: "❌", 2: "⚠️", 3: "✅"}  # 每档的图标，拼在折叠卡片标题最前面
+TIER_TEXT = {0: "识别失败", 1: "校验不通过", 2: "通过（有警告）", 3: "通过"}  # 每档的文字说明
+
+
+def _tier_of(result):  # 判断一张发票落在哪一档
+    """只看基础校验结果，判断这张发票属于哪一档（不涉及 Agent）"""
+    if not result or result.get("status") == "failed":  # 没有结果，或流程在识别阶段就失败了
+        return 0  # 归到「识别失败」
+    summary = result.get("summary") or {}  # 基础校验汇总
+    if summary.get("error_count", 0) > 0:  # 有 error 级问题
+        return 1  # 归到「校验不通过」
+    if summary.get("warning_count", 0) > 0:  # 没有 error，但有 warning
+        return 2  # 归到「通过但有警告」
+    return 3  # 12 项全部通过
+
+
+def _widget_key(signature):  # 把长文件指纹压成一个短且稳定的字符串
+    """用来拼各个组件的 key（Streamlit 要求同一次运行里组件 key 不能重复）"""
+    return hashlib.sha1(signature.encode("utf-8")).hexdigest()[:12]  # 取 SHA1 前 12 位，够用且短
+
+
+def _card_title(idx, item, tier):  # 拼折叠卡片的标题文字
+    """标题 = 图标 + 编号 + 档位 + 销售方（或文件名）+ 金额 + 是否已存入"""
+    result = item["result"]  # 这一张的识别 + 校验结果
+    parts = [f"{TIER_ICON[tier]}", TIER_TEXT[tier]]  # 开头是图标、档位（去掉编号）
+    if result.get("status") == "success":  # 识别成功：给销售方和金额，用户才好认出这是哪张发票
+        data = result.get("invoice_data") or {}  # 识别出的字段
+        seller = (data.get("销售方名称") or "").strip()  # 销售方名称
+        if len(seller) > 22:  # 太长会把标题撑爆
+            seller = seller[:22] + "…"  # 截断并加省略号
+        parts.append(seller or "未识别到销售方")  # 销售方为空时给个占位说明
+        amount = (data.get("价税合计小写") or "").strip()  # 价税合计
+        if amount:  # 有金额才显示
+            parts.append(f"¥{amount}")  # 加上金额
+    else:  # 识别失败：给文件名和失败原因，用户才知道是哪张出了问题
+        parts.append(item["name"])  # 原始文件名
+        parts.append(str((result.get("error") or {}).get("message") or "未知原因"))  # 失败原因
+    if item.get("saved_id"):  # 这张已经存进票夹了
+        parts.append("已存入票夹")  # 加个标记
+    return " · ".join(parts)  # 用间隔号把各部分串起来
+
+
+def build_audit_record(result, agent_answer=None):  # 把基础校验结果整理成可 JSON 存储的审核记录
     """
     把基础校验结果整理成可 JSON 存储的审核记录
 
@@ -45,15 +95,15 @@ def _notify(success, message):  # 轻提示：显示在页面右上角，几秒�
     st.toast(message, icon="✅" if success else "❌")  # 成功给绿色对勾，失败给红色叉号
 
 
-def _alive_saved_id():  # 内部函数：取本次会话记录过的发票 id，并确认它现在还在票夹里
-    """会话里记的发票 id 可能已经过期（用户把发票从票夹删掉了），所以要去数据库确认一次"""
-    saved_id = st.session_state.get("saved_invoice_id")  # 本次上传流程里存过的发票 id
+def _alive_saved_id(item):  # 内部函数：取这张发票记过的 id，并确认它现在还在票夹里
+    """多张上传后，每张卡片各存各的，所以「已存入」标记挂在每张卡片自己身上"""
+    saved_id = item.get("saved_id")  # 这张发票在本次会话里存过的话，id 会记在这里
     if not saved_id:  # 没存过（或已清空）
         return None  # 直接返回空，让上层重新走存入流程
     detail = _db.get_invoice_detail(saved_id)  # 去数据库查这条发票记录还在不在
     if detail and detail.get("folder_status") == "in_folder":  # 记录存在，而且还在票夹里
         return saved_id  # 可以放心复用这个 id
-    st.session_state["saved_invoice_id"] = None  # 记录没了或已被移出票夹：清掉这个过期标记
+    item["saved_id"] = None  # 记录没了或已被移出票夹：清掉这张卡片上的过期标记
     return None  # 返回空，让上层重新存入
 
 
@@ -67,19 +117,21 @@ def _find_in_folder(invoice_number):  # 内部函数：按发票号码在当前�
     return None  # 转完一圈没找到
 
 
-def _save_to_folder(invoice_data, result, quiet=False):  # 内部函数：把当前发票存进票夹
-    """把当前发票存进票夹。
+def _save_to_folder(item, quiet=False):  # 内部函数：把「这一张」发票存进票夹
+    """把当前卡片对应的发票存进票夹。
 
     返回：成功 → 发票 id；失败 → None（失败时用轻提示说明原因）
-    quiet=True 时不提示，用于「填写报销单」前的静默自动存入"""
-    saved_id = _alive_saved_id()  # 先看本次上传是否已经存过（并确认它还真的在票夹里）
+    quiet=True 时不提示，用于「填写报销单」前的静默自动存入和批量存入"""
+    saved_id = _alive_saved_id(item)  # 先看这张卡片是否已经存过（并确认它还真的在票夹里）
     if saved_id:  # 已经存过
         if not quiet:  # 需要提示时才提示
             _notify(True, "该发票已在票夹中，无需重复存入")  # 轻提示重复存入
         return saved_id  # 直接复用已有 id，不再写库
 
-    file_bytes = st.session_state.get("upload_file_bytes")  # 解析时缓存的原始文件字节
-    file_name = st.session_state.get("upload_file_name")  # 解析时缓存的原始文件名
+    result = item["result"]  # 这张卡片的识别 + 校验结果
+    invoice_data = result.get("invoice_data") or {}  # 识别出的发票字段（中文键）
+    file_bytes = item.get("bytes")  # 原始文件字节（解析时就缓存好了）
+    file_name = item.get("name")  # 原始文件名
     if not file_bytes:  # 找不到原始文件（例如用户刚清空过缓存）
         if not quiet:  # 需要提示时才提示
             _notify(False, "存入不成功：找不到原始文件，请重新上传")  # 轻提示失败原因
@@ -95,147 +147,207 @@ def _save_to_folder(invoice_data, result, quiet=False):  # 内部函数：把当
     )
 
     if save_result.get("ok"):  # 写库成功
-        st.session_state["saved_invoice_id"] = save_result["id"]  # 记下发票 id，后面填写报销单直接复用
+        item["saved_id"] = save_result["id"]  # 记下发票 id，后面填写报销单直接复用
         if not quiet:  # 需要提示时才提示
             _notify(True, "存入成功")  # 轻提示「存入成功」
         return save_result["id"]  # 把 id 返回给调用方
 
     number = (invoice_data.get("发票号码") or "").strip()  # 写库失败：先拿到这张发票的号码备用
     existing_id = _find_in_folder(number)  # 去当前员工的票夹里找找，是不是早前就已经存过这张发票了
-    if not existing_id:  # 当前员工票夹里没有 → 直接显示数据库返回的错误原因（已包含"被谁存了"的提示）
-        if not quiet:
-            _notify(False, "存入不成功：" + str(save_result.get("error") or "未知错误"))
+    if not existing_id:  # 当前员工票夹里没有 → 直接显示数据库返回的错误原因
+        if not quiet:  # 需要提示时才提示
+            _notify(False, "存入不成功：" + str(save_result.get("error") or "未知错误"))  # 轻提示失败原因
         return None  # 返回空表示失败
 
-    st.session_state["saved_invoice_id"] = existing_id  # 票夹里已经有了：直接复用它的 id
+    item["saved_id"] = existing_id  # 票夹里已经有了：直接复用它的 id
     if not quiet:  # 需要提示时才提示
         _notify(True, "存入成功：该发票已存在于票夹中")  # 轻提示已经在票夹里了
     return existing_id  # 把已有发票的 id 返回给调用方
 
 
+# ============================================================================
+# 页面主体
+# ============================================================================
 st.set_page_config(page_title="发票上传", layout="wide")  # 设置浏览器标签标题和宽屏布局
 
 with st.container(key="pagehead"):  # 统一页头容器（样式由 app.py 统一控制，其他页面也一样）
     st.header("发票上传")  # 统一字号的大标题
-    st.caption("上传 XML / PDF / 图片发票，自动识别并执行基础合规校验")  # 标题下的灰色说明
+    st.caption("支持一次选择多张发票，自动逐张识别并执行基础合规校验")  # 标题下的灰色说明
     st.divider()  # 灰色横线，与标题、正文的间距已统一收紧
 
+# ---------- 会话状态初始化 ----------
+if "batch" not in st.session_state:  # batch 用来缓存本次会话里所有已解析的发票
+    st.session_state["batch"] = {}  # 结构：{文件指纹: {name, bytes, result, saved_id}}
+if "uploader_version" not in st.session_state:  # 上传控件的版本号
+    st.session_state["uploader_version"] = 0  # 递增它就能把上传控件整个换掉，已选文件会被真正清空
 
-uploaded_file = st.file_uploader(  # 文件上传控件：用户选择发票文件后返回文件对象
-    "选择发票文件，支持XML、PDF、PNG、JPG格式",  # 控件上方的提示文字
-    type=["xml", "pdf", "png", "jpg", "jpeg"]  # 只允许这些后缀，其他文件点不上
+uploaded_files = st.file_uploader(  # 文件上传控件：开了多选后返回一个文件列表
+    "选择发票文件，可一次选多张；支持XML、PDF、PNG、JPG格式",  # 控件上方的提示文字
+    type=["xml", "pdf", "png", "jpg", "jpeg"],  # 只允许这些后缀，其他文件点不上
+    accept_multiple_files=True,  # 关键改动：允许多选
+    key=f"uploader_{st.session_state['uploader_version']}",  # 用版本号做 key，点「清空」时递增即可真正清掉已选文件
 )
 
-if uploaded_file is not None:  # 只有用户真的选了文件，才走「识别」这一步
-    file_bytes = uploaded_file.getvalue()  # 把上传的文件读成二进制（后面存票夹要用）
-    # 用「文件名 + 大小 + 内容哈希」给这次上传算一个指纹，用来判断用户是否换了文件
-    file_signature = f"{uploaded_file.name}|{len(file_bytes)}|{hashlib.sha256(file_bytes).hexdigest()}"
+uploaded_files = uploaded_files or []  # 没选文件时可能是 None，统一成空列表方便后面处理
 
-    if st.session_state.get("pipeline_signature") != file_signature:  # 换文件了：重新解析，并清掉上一张发票留下的状态
-        with st.spinner("正在解析发票并执行基础校验..."):  # 转圈提示只在首次解析该文件时出现
-            with tempfile.NamedTemporaryFile(delete=False, suffix=uploaded_file.name) as tmp:  # 建临时文件，后缀跟随原文件名
-                tmp.write(file_bytes)  # 把上传内容写进临时文件
-                tmp_path = tmp.name  # 记下临时文件路径，交给识别器使用
+# ---------- 给当前上传控件里的每个文件算指纹 ----------
+current = {}  # {指纹: (文件对象, 文件字节)}；dict 保持插入顺序，正好等于用户在上传控件里看到的顺序
+for _f in uploaded_files:  # 逐个文件
+    _bytes = _f.getvalue()  # 读成二进制（写临时文件和存票夹都要用）
+    _sig = f"{_f.name}|{len(_bytes)}|{hashlib.sha256(_bytes).hexdigest()}"  # 文件名 + 大小 + 内容哈希
+    current[_sig] = (_f, _bytes)  # 记下来
 
-            result = run_basic_check_pipeline(tmp_path)  # 执行流程：解析发票 + 12 项基础校验（到此为止，不调用 Agent）
+batch = st.session_state["batch"]  # 取出本次会话的解析缓存
 
-        st.session_state.pipeline_result = result  # 结果存进会话状态（这也是「切页面回来内容还在」的关键）
-        st.session_state.pipeline_signature = file_signature  # 记下本次解析的文件指纹
-        st.session_state.upload_file_bytes = file_bytes  # 缓存原始字节（存入票夹时用，不再依赖上传控件）
-        st.session_state.upload_file_name = uploaded_file.name  # 缓存原始文件名
-        st.session_state["saved_invoice_id"] = None  # 新文件：清掉上一张的「已存入票夹」标记
-        for stale_key in ("pending_consult", "pending_consult_history", "pending_consult_agent", "pending_consult_asked"):
-            st.session_state.pop(stale_key, None)  # 清掉上一张发票的咨询材料，避免串味
+# ---------- 第1步：上传控件里已经删掉的文件，缓存里也要删掉 ----------
+for _sig in list(batch.keys()):  # 遍历缓存的 key（用 list 包一层，避免遍历时改动字典）
+    if _sig not in current:  # 这个指纹已经不在当前上传列表里了
+        batch.pop(_sig)  # 清掉它的解析结果，避免页面还显示已经不存在的文件
 
-result = st.session_state.get("pipeline_result")  # 取本次会话缓存的识别结果：切到别的页面再回来，它依然在
+# ---------- 第2步：只解析新增的文件（增量解析，已解析过的直接复用，不重跑） ----------
+new_sigs = [s for s in current if s not in batch]  # 找出还没解析过的文件
+if new_sigs:  # 有新文件才解析
+    _bar = st.progress(0.0, text="准备解析…")  # 进度条：多张时用户需要知道进行到哪了
+    for _i, _sig in enumerate(new_sigs, 1):  # 逐张解析
+        _f, _bytes = current[_sig]  # 取出文件对象和文件字节
+        _bar.progress((_i - 1) / len(new_sigs), text=f"正在解析 {_i}/{len(new_sigs)}：{_f.name}")  # 更新进度
+        with tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(_f.name)[1]) as _tmp:  # 建临时文件
+            _tmp.write(_bytes)  # 把上传内容写进临时文件
+            _tmp_path = _tmp.name  # 记下临时文件路径，交给识别器使用
+        try:  # 单张解析失败不能连累其他张
+            _result = run_basic_check_pipeline(_tmp_path)  # 识别发票 + 12 项基础校验（到此为止，不调用 Agent）
+        except Exception as _e:  # 兜底：出现意外异常时，也包成标准的失败结果
+            _result = {"status": "failed", "stage": "recognize", "error": {"code": "UNEXPECTED", "message": str(_e)}}
+        batch[_sig] = {"name": _f.name, "bytes": _bytes, "result": _result, "saved_id": None}  # 存进缓存
+    _bar.progress(1.0, text="解析完成")  # 进度条走满
+    _bar.empty()  # 然后把进度条收掉，不留在页面上
 
-if result is None:  # 这个会话还没有解析过任何发票
+# ---------- 第3步：渲染 ----------
+if not current:  # 一张文件都没有
     st.info("还没有选择文件。上传发票后会自动识别并做基础合规校验，然后给出下一步操作入口。")  # 蓝色引导条
-else:  # 有识别结果：完整渲染（下面这段不再依赖上传控件，所以切页面回来内容不会丢）
-    info_l, info_r = st.columns([5, 1], vertical_alignment="center")  # 左：当前发票说明；右：清空按钮
-    with info_l:  # 左侧说明
-        st.caption(f"当前发票：{st.session_state.get('upload_file_name') or '未命名'}（识别结果已保留，重新选择文件即可替换）")  # 灰色小字
-    with info_r:  # 右侧清空入口
-        if st.button("清空", use_container_width=True, key="clear_pipeline"):  # 想换一张发票时点它
-            for stale_key in ("pipeline_result", "pipeline_signature", "upload_file_bytes", "upload_file_name", "saved_invoice_id"):
-                st.session_state.pop(stale_key, None)  # 把本次会话的识别缓存全部清掉
+else:  # 有文件：先渲染汇总行，再渲染卡片列表
+    _counts = {0: 0, 1: 0, 2: 0, 3: 0}  # 四个档位各有多少张
+    for _sig in current:  # 逐张统计
+        _counts[_tier_of(batch[_sig]["result"])] += 1  # 落到对应档位
+
+    _sum_parts = [f"{TIER_ICON[t]} {_counts[t]} 张{TIER_TEXT[t]}" for t in (0, 1, 2, 3) if _counts[t]]  # 只列出数量不为 0 的档
+    _saveable = sum(1 for _sig in current if batch[_sig]["result"].get("status") == "success")  # 识别成功、能存入票夹的张数
+
+    _c1, _c2, _c3 = st.columns([4, 1.5, 0.7], vertical_alignment="center")  # 左：汇总文字；中：批量存入；右：清空
+    with _c1:  # 左侧：汇总文字
+        st.write(f"共 {len(current)} 张：" + " · ".join(_sum_parts))  # 例如「共 5 张：⛔ 1 张识别失败 · ✅ 4 张通过」
+    with _c2:  # 中间：批量存入票夹
+        if st.button(f"全部存入票夹（{_saveable} 张）", use_container_width=True, disabled=_saveable == 0, key="save_all"):
+            _ok = _fail = _skip = 0  # 分别统计成功 / 失败 / 跳过
+            for _sig in current:  # 逐张存
+                _item = batch[_sig]  # 取出这一张
+                if _item["result"].get("status") != "success":  # 识别失败的没有数据可存
+                    _skip += 1  # 计入跳过
+                    continue  # 处理下一张
+                if _save_to_folder(_item, quiet=True):  # 静默存入，结果最后由一句轻提示统一说明
+                    _ok += 1  # 成功
+                else:  # 存入失败
+                    _fail += 1  # 失败
+            _msg = f"成功存入 {_ok} 张"  # 提示文字开头
+            if _fail:  # 有失败
+                _msg += f"，{_fail} 张失败"  # 补上失败数
+            if _skip:  # 有跳过
+                _msg += f"，{_skip} 张因识别失败未存入"  # 说明跳过原因
+            _notify(_fail == 0, _msg)  # 一次轻提示把结果说清楚
+    with _c3:  # 右侧：清空
+        if st.button("清空", use_container_width=True, key="clear_all"):  # 点它清掉全部已上传发票
+            st.session_state["batch"] = {}  # 清掉解析缓存
+            st.session_state["uploader_version"] += 1  # 换掉上传控件的 key，让已选文件真正被清空
             st.rerun()  # 立刻重跑一次，页面回到「还没有选择文件」的状态
 
-    if result["status"] == "failed":  # 流程失败（例如无法识别）
-        st.error(f"处理失败：{result['error']['message']}")  # 用红色错误框显示失败原因
-    else:  # 流程成功
-        invoice_data = result["invoice_data"]  # 取出解析出来的发票字段字典
-        summary = result["summary"]  # 基础校验汇总（含 final_result）
-        passed = summary["final_result"] == "通过"  # 基础校验是否通过
+    _pos = {s: i for i, s in enumerate(current)}  # 每张发票在上传控件里的原始位置（用于显示编号和稳定排序）
+    _ordered = sorted(current.keys(), key=lambda s: (_tier_of(batch[s]["result"]), _pos[s]))  # 按档位排序：失败和不通过的置顶，同档内保持上传顺序
 
-        st.subheader("发票识别信息")  # 小标题：识别结果
-        col1, col2 = st.columns(2)  # 把区域分成左右两列，信息更紧凑
-        with col1:  # 左列：发票自身信息
-            st.write("发票类型：", invoice_data.get("发票类型", ""))  # 显示发票类型
-            st.write("发票号码：", invoice_data.get("发票号码", ""))  # 显示发票号码
-            st.write("开票日期：", invoice_data.get("开票日期", ""))  # 显示开票日期
-        with col2:  # 右列：双方与金额
-            st.write("购买方：", invoice_data.get("购买方名称", ""))  # 显示购买方名称
-            st.write("销售方：", invoice_data.get("销售方名称", ""))  # 显示销售方名称
-            st.write("价税合计：", invoice_data.get("价税合计小写", ""))  # 显示价税合计金额
+    for _sig in _ordered:  # 逐张渲染折叠卡片
+        _item = batch[_sig]  # 这一张的缓存
+        _result = _item["result"]  # 它的识别 + 校验结果
+        _tier = _tier_of(_result)  # 它的档位
+        _k = _widget_key(_sig)  # 组件 key 的后缀
+        _idx = _pos[_sig] + 1  # 显示的编号，跟上传控件里的顺序一致
 
-        if "明细列表" in invoice_data and invoice_data["明细列表"]:  # 如果解析出了商品明细
-            st.subheader("商品明细")  # 小标题：商品明细
-            st.dataframe(invoice_data["明细列表"])  # 用表格展示明细行
+        with st.expander(_card_title(_idx, _item, _tier), expanded=(_tier <= 1), key=f"card_{_k}"):  # 折叠卡片：失败和不通过的默认展开
+            st.caption(f"文件名：{_item['name']}")  # 灰色小字标出原始文件名，方便对上上传列表
 
-        # 识别出的完整JSON数据（存储在数据库中的原始内容，便于核对解析是否完整）
-        st.subheader("识别数据（JSON）")  # 小标题：识别JSON
-        with st.expander("查看/复制识别出的完整JSON（入库原样存储）", expanded=False):  # 折叠面板，默认收起
-            st.json(invoice_data)  # 用JSON树展示识别出的所有字段（与存入数据库 parsed_json 内容一致）
-            st.caption("以上内容即存入数据库 parsed_json 字段的原始数据，供核对解析字段是否完整。")  # 灰色说明
+            # ---------- ① 需要你处理：把问题摆在最前面 ----------
+            if _result.get("status") != "success":  # 识别阶段就失败了
+                _err = _result.get("error") or {}  # 错误信息
+                st.error(f"识别失败：{_err.get('message', '未知原因')}")  # 红色错误框
+                st.caption(f"失败阶段：{_result.get('stage', '未知')}")  # 灰色小字说明卡在哪一步
+            else:  # 识别成功：展示基础校验的问题
+                _checks = _result.get("check_results") or []  # 12 项校验的逐条结果
+                _errors = [c for c in _checks if not c["pass"] and c.get("level") != "warning"]  # 不通过项（error 级）
+                _warns = [c for c in _checks if not c["pass"] and c.get("level") == "warning"]  # 警告项（warning 级）
+                if not _errors and not _warns:  # 12 项全过
+                    st.success(f"基础校验通过：共 {len(_checks)} 项检查全部通过")  # 绿色提示
+                    for _c in _checks:
+                        st.markdown(f"✅ {_c['check_name']}：{_c['message']}")
+                for _c in _errors:  # 逐条列出不通过项
+                    st.error(f"{_c['check_name']}：{_c['message']}")  # 红色错误框
+                    if _c.get("expected") and _c.get("actual"):  # 有期望值和实际值时补一行对照
+                        st.caption(f"应为：{_c['expected']}　实际：{_c['actual']}")  # 灰色小字
+                for _c in _warns:  # 逐条列出警告项
+                    st.warning(f"{_c['check_name']}：{_c['message']}")  # 黄色警告框
 
-        st.subheader("基础校验结果")  # 小标题：基础校验结果
-        st.code(format_for_user(result), language=None)  # 用等宽文本块显示逐条校验结论，保持排版
+            # ---------- ② 发票识别信息 ----------
+            if _result.get("status") == "success":  # 识别成功才有识别信息可看
+                _data = _result["invoice_data"]  # 识别出的发票字段
+                st.markdown("**发票识别信息**")  # 加粗小标题
+                _col_l, _col_r = st.columns(2)  # 左右两列，信息更紧凑
+                with _col_l:  # 左列：发票自身信息
+                    st.write("发票类型：", _data.get("发票类型", ""))  # 显示发票类型
+                    st.write("发票号码：", _data.get("发票号码", ""))  # 显示发票号码
+                    st.write("开票日期：", _data.get("开票日期", ""))  # 显示开票日期
+                with _col_r:  # 右列：双方与金额
+                    st.write("购买方：", _data.get("购买方名称", ""))  # 显示购买方名称
+                    st.write("销售方：", _data.get("销售方名称", ""))  # 显示销售方名称
+                    st.write("价税合计：", _data.get("价税合计小写", ""))  # 显示价税合计金额
 
-        st.divider()  # 分隔线：把校验结果和下面的操作区隔开
-        st.subheader("请选择操作")  # 小标题：操作区
+                if _data.get("明细列表"):  # 如果解析出了商品明细
+                    st.markdown("**商品明细**")  # 加粗小标题
+                    st.dataframe(_data["明细列表"])  # 用表格展示明细行
 
-        if passed:  # 基础校验通过
-            st.success("基础校验通过：可以存入票夹，也可以直接填写报销单")  # 绿色提示
-        else:  # 基础校验没通过
-            st.warning("基础校验未通过：可以先咨询 AI 审核员了解原因；填写报销单暂不开放")  # 黄色提示
+                if st.toggle("查看全部校验明细", key=f"detail_{_k}"):  # 默认收起，展开才渲染（也省一点性能）
+                    st.code(format_for_user(_result), language=None)  # 等宽文本块，保持原有排版
+                if st.toggle("查看识别数据（JSON）", key=f"json_{_k}"):  # 默认收起
+                    st.json(_data)  # 用 JSON 树展示识别出的所有字段
+                    st.caption("以上内容即存入数据库 parsed_json 字段的原始数据，供核对解析字段是否完整。")  # 灰色说明
 
-        op1, op2 = st.columns(2)  # 第一行两个操作
-        op3, op4 = st.columns(2)  # 第二行两个操作
-
-        # ---------- 操作1：咨询AI审核员（带着发票信息 + 基础校验结果跳到帮助中心） ----------
-        with op1:
-            if st.button("咨询AI审核员", use_container_width=True):  # 点击后跳转
-                st.session_state["pending_consult"] = {  # 把本次要咨询的材料打包存好
-                    "invoice_data": invoice_data,  # 发票识别结果（中文键）
-                    "basic_check_text": format_for_user(result),  # 基础校验结果明细文本
-                    "final_result": summary["final_result"],  # 基础校验结论
-                    "invoice_number": invoice_data.get("发票号码", ""),  # 发票号码（帮助中心顶部展示用）
-                    "seller_name": invoice_data.get("销售方名称", ""),  # 销售方（展示用）
-                    "total_amount": invoice_data.get("价税合计小写", ""),  # 金额（展示用）
-                }
-                st.session_state["pending_consult_asked"] = False  # 让帮助中心重新自动发起第一问
-                st.session_state["pending_consult_history"] = []  # 清空上一轮咨询对话
-                st.session_state["pending_consult_agent"] = None  # 强制重新创建 Agent（绑定新发票）
-                st.switch_page("pages/4_帮助中心.py")  # 跳转到帮助中心
-
-        # ---------- 操作2：存入票夹 ----------
-        with op2:
-            if st.button("存入票夹", use_container_width=True):  # 点击后存库
-                _save_to_folder(invoice_data, result)  # 成功 / 失败都由函数内部用轻提示告诉用户
-
-        # ---------- 操作3：填写报销单（必须基础校验通过；进入前自动存入票夹） ----------
-        with op3:
-            if st.button("填写报销单", type="primary", use_container_width=True, disabled=not passed):  # 未通过时按钮禁用
-                invoice_id = _save_to_folder(invoice_data, result, quiet=True)  # 先静默存入票夹，拿到发票 id
-                if invoice_id:  # 存入成功才跳转
-                    st.session_state["expense_form_invoice_id"] = invoice_id  # 把发票 id 传给报销单填写页
-                    st.session_state["expense_form_flash"] = "发票已自动存入票夹"  # 到填写页再弹一次提示
-                    st.switch_page("pages/7_报销单填写.py")  # 跳转到报销单填写页
-            if not passed:  # 按钮被禁用时说明原因
-                st.caption("基础校验未通过，无法填写报销单")  # 灰色小字
-
-        # ---------- 操作4：联系人工财务（暂未实现） ----------
-        with op4:
-            st.button("联系人工财务", use_container_width=True, disabled=True)  # 置灰占位
-            st.caption("功能开发中，暂未开放")  # 灰色小字说明
+                # ---------- ③ 逐张的操作入口 ----------
+                st.divider()  # 分隔线：把信息区和操作区隔开
+                _passed = (_result.get("summary") or {}).get("error_count", 0) == 0  # 基础校验是否通过（warning 不影响）
+                _op1, _op2 = st.columns(2)  # 第一行两个操作
+                _op3, _op4 = st.columns(2)  # 第二行两个操作
+                with _op1:  # 操作1：咨询AI审核员（带着这张发票的信息 + 基础校验结果跳到帮助中心）
+                    if st.button("咨询AI审核员", use_container_width=True, key=f"consult_{_k}"):  # 点击后跳转
+                        st.session_state["pending_consult"] = {  # 把本次要咨询的材料打包存好
+                            "invoice_data": _data,  # 发票识别结果（中文键）
+                            "basic_check_text": format_for_user(_result),  # 基础校验结果明细文本
+                            "final_result": (_result.get("summary") or {}).get("final_result", "未审核"),  # 基础校验结论
+                            "invoice_number": _data.get("发票号码", ""),  # 发票号码（帮助中心顶部展示用）
+                            "seller_name": _data.get("销售方名称", ""),  # 销售方（展示用）
+                            "total_amount": _data.get("价税合计小写", ""),  # 金额（展示用）
+                        }
+                        st.session_state["pending_consult_asked"] = False  # 让帮助中心重新自动发起第一问
+                        st.session_state["pending_consult_history"] = []  # 清空上一轮咨询对话
+                        st.session_state["pending_consult_agent"] = None  # 强制重新创建 Agent（绑定新发票）
+                        st.switch_page("pages/4_帮助中心.py")  # 跳转到帮助中心
+                with _op2:  # 操作2：存入票夹（只存这一张）
+                    if st.button("存入票夹", use_container_width=True, key=f"save_{_k}"):  # 点击后存库
+                        _save_to_folder(_item)  # 成功 / 失败都由函数内部用轻提示告诉用户
+                with _op3:  # 操作3：填写报销单（必须基础校验通过；进入前自动存入票夹）
+                    if st.button("填写报销单", type="primary", use_container_width=True, disabled=not _passed, key=f"form_{_k}"):  # 未通过时按钮禁用
+                        _invoice_id = _save_to_folder(_item, quiet=True)  # 先静默存入票夹，拿到发票 id
+                        if _invoice_id:  # 存入成功才跳转
+                            st.session_state["expense_form_invoice_id"] = _invoice_id  # 把发票 id 传给报销单填写页
+                            st.session_state["expense_form_flash"] = "发票已自动存入票夹"  # 到填写页再弹一次提示
+                            st.switch_page("pages/7_报销单填写.py")  # 跳转到报销单填写页
+                    if not _passed:  # 按钮被禁用时说明原因
+                        st.caption("基础校验未通过，无法填写报销单")  # 灰色小字
+                with _op4:  # 操作4：联系人工财务（暂未实现）
+                    st.button("联系人工财务", use_container_width=True, disabled=True, key=f"human_{_k}")  # 置灰占位
+                    st.caption("功能开发中，暂未开放")  # 灰色小字说明

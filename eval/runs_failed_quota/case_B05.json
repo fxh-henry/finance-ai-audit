@@ -1,0 +1,276 @@
+{
+  "case_id": "case_B05",
+  "source": "报销单一致性",
+  "note": "餐饮票900元，报销单事由写「销售部同事们团建聚餐」，招待对象为空。票面类型与报销单费用类型一致，只能靠事由语义判断",
+  "label": "不通过",
+  "label_reason": "制度第十八条 业务招待费限于宴请客户/合作方；内部团建聚餐不属于业务招待，属第六条7 与经营业务无关的消费，且缺第十九条要求的招待申请单",
+  "is_adversarial": true,
+  "employee_id": 2,
+  "employee_level": "部门经理",
+  "invoice_data": {
+    "发票类型": "电子发票（普通发票）",
+    "发票种类": "增值税普通发票",
+    "发票号码": "26990000000000000013",
+    "开票日期": "2026年09月21日",
+    "购买方名称": "苏州城市学院",
+    "购买方税号": "12320500MB1F99368P",
+    "销售方名称": "宿迁市泗阳满庭芳餐饮管理有限公司",
+    "销售方税号": "91321323MA2XYQ7L4K",
+    "不含税金额": "849.06",
+    "税额": "50.94",
+    "税率": "6%",
+    "价税合计小写": "900.00",
+    "价税合计大写": "玖佰圆整",
+    "开票人": "周敏",
+    "备注": "",
+    "项目名称": "*餐饮服务*餐饮费",
+    "明细列表": [
+      {
+        "项目名称": "*餐饮服务*餐饮费",
+        "规格型号": "",
+        "单位": "次",
+        "数量": "1",
+        "单价": "849.06",
+        "金额": "849.06",
+        "税率": "6%",
+        "税额": "50.94"
+      }
+    ]
+  },
+  "expense_form": {
+    "expense_type": "餐饮费",
+    "trip_no": "TRIP-EVAL-B05",
+    "occur_date": "2026-09-21",
+    "reason": "销售部同事们团建聚餐",
+    "total_amount": 900.0,
+    "participants": "李四、王五等6人",
+    "ext_fields": {
+      "diners": 6,
+      "meal_count": 1,
+      "guest_names": ""
+    },
+    "detail_items": []
+  },
+  "anomaly_result": {
+    "has_risk": false,
+    "risk_count": 0,
+    "risk_items": [],
+    "all_results": {
+      "duplicate": {
+        "is_duplicate": false,
+        "previous_records": [],
+        "message": "发票号码 26990000000000000013 无重复报销记录（已驳回/待审核的单据不计入）"
+      },
+      "consecutive": {
+        "is_consecutive": false,
+        "consecutive_count": 0,
+        "consecutive_invoices": [],
+        "message": "日期格式错误"
+      },
+      "split": {
+        "is_suspected_split": false,
+        "related_invoices": [],
+        "total_sum": 900.0,
+        "threshold": 500,
+        "message": "未检测到拆分报销特征"
+      },
+      "amount_threshold": {
+        "is_critical": false,
+        "near_threshold": 0,
+        "gap": 0,
+        "ratio": 0,
+        "message": "金额未接近任何审批阈值"
+      },
+      "high_frequency": {
+        "is_abnormal": false,
+        "employee_count": 0,
+        "employee_total": 0,
+        "dept_avg_count": 4.0,
+        "dept_avg_total": 10146.72,
+        "count_ratio": 0.0,
+        "amount_ratio": 0.0,
+        "message": "近30天报销0次、0.00元，处于部门正常水平"
+      },
+      "behavior_profile": {
+        "total_count": 0,
+        "total_amount": 0,
+        "expense_type_dist": {},
+        "top_sellers": [],
+        "pass_rate": 0,
+        "avg_amount": 0,
+        "last_reimburse_date": "无记录",
+        "message": "近90天共报销0次，总金额0.00元，通过率0.0%"
+      }
+    }
+  },
+  "answer": "",
+  "structured": {},
+  "trace": {
+    "steps": [
+      {
+        "step": 1,
+        "kind": "thinking",
+        "text": "我将检索制度依据并进行费用标准校验。\n\n",
+        "tool_name": "",
+        "tool_args": {},
+        "tool_result": {},
+        "ok": true
+      },
+      {
+        "step": 2,
+        "kind": "tool_call",
+        "text": "",
+        "tool_name": "rag_policy_search_tool",
+        "tool_args": {
+          "item_name": "*餐饮服务*餐饮费",
+          "amount": "900.00",
+          "seller": "宿迁市泗阳满庭芳餐饮管理有限公司"
+        },
+        "tool_result": {},
+        "ok": true
+      },
+      {
+        "step": 3,
+        "kind": "tool_call",
+        "text": "",
+        "tool_name": "expense_standard_tool",
+        "tool_args": {
+          "expense_type": "伙食补助",
+          "amount": 900,
+          "level": "部门经理",
+          "days": 1
+        },
+        "tool_result": {},
+        "ok": true
+      },
+      {
+        "step": 4,
+        "kind": "tool_result",
+        "text": "",
+        "tool_name": "expense_standard_tool",
+        "tool_args": {},
+        "tool_result": {
+          "passed": false,
+          "standard": 100,
+          "actual": 900.0,
+          "exceed": 800.0,
+          "source_clause": "第十五条 伙食补助标准",
+          "caliber": "1天 × 100元/天（一般地区）= 100元",
+          "needs_human": false,
+          "message": "伙食补助超标：1天 × 100元/天（一般地区）= 100元，实际900.0元，超标800.0元（依据：第十五条 伙食补助标准）"
+        },
+        "ok": true
+      },
+      {
+        "step": 5,
+        "kind": "tool_result",
+        "text": "",
+        "tool_name": "rag_policy_search_tool",
+        "tool_args": {},
+        "tool_result": {
+          "query": "业务招待费报销标准 人均标准 审批要求",
+          "policy_text": "[资料1]\n【通用企业报销制度 > 第五章 业务招待费报销标准 > 第十九条 审批要求】\n### 第十九条 审批要求\n1. 业务招待前必须填写《业务招待申请单》，注明招待对象、人数、事由、预计金额\n2. 未经审批的业务招待费不予报销\n3. 陪餐人数不得超过接待对象人数的1/3\n\n[资料2]\n【通用企业报销制度 > 第五章 业务招待费报销标准 > 第二十条 标准】\n### 第二十条 标准\n| 级别 | 人均标准（元/人/次） |\n|---|---|\n| 重要客户/总经理接待 | 300-500 |\n| 一般客户/部门经理接待 | 150-300 |\n| 日常工作餐 | 50-100 |\n\n[资料3]\n【README > 文档清单 > 04-费用报销标准】\n### 04-费用报销标准\n| 文档 | 内容 |\n|---|---|\n| 差旅费标准 | 交通、住宿、伙食补助、市内交通 |\n| 业务招待费标准 | 人均标准、陪餐人数、税务规定 |\n| 其他费用标准 | 办公费、通讯费、培训费、会议费 |",
+          "source_count": 3
+        },
+        "ok": true
+      },
+      {
+        "step": 6,
+        "kind": "thinking",
+        "text": "需要进一步确认团建聚餐的制度口径，我再检索一次。\n\n",
+        "tool_name": "",
+        "tool_args": {},
+        "tool_result": {},
+        "ok": true
+      },
+      {
+        "step": 7,
+        "kind": "tool_call",
+        "text": "",
+        "tool_name": "rag_policy_search_tool",
+        "tool_args": {
+          "item_name": "团建聚餐费 员工内部聚餐 人均标准",
+          "amount": "900.00"
+        },
+        "tool_result": {},
+        "ok": true
+      },
+      {
+        "step": 8,
+        "kind": "tool_call",
+        "text": "",
+        "tool_name": "rag_policy_search_tool",
+        "tool_args": {
+          "item_name": "餐饮费 发票 报销 附件要求 明细清单",
+          "amount": "900.00",
+          "seller": "宿迁市泗阳满庭芳餐饮管理有限公司"
+        },
+        "tool_result": {},
+        "ok": true
+      },
+      {
+        "step": 9,
+        "kind": "tool_result",
+        "text": "",
+        "tool_name": "rag_policy_search_tool",
+        "tool_args": {},
+        "tool_result": {
+          "query": "业务招待费报销标准 人均标准 审批要求",
+          "policy_text": "[资料1]\n【通用企业报销制度 > 第五章 业务招待费报销标准 > 第十九条 审批要求】\n### 第十九条 审批要求\n1. 业务招待前必须填写《业务招待申请单》，注明招待对象、人数、事由、预计金额\n2. 未经审批的业务招待费不予报销\n3. 陪餐人数不得超过接待对象人数的1/3\n\n[资料2]\n【通用企业报销制度 > 第五章 业务招待费报销标准 > 第二十条 标准】\n### 第二十条 标准\n| 级别 | 人均标准（元/人/次） |\n|---|---|\n| 重要客户/总经理接待 | 300-500 |\n| 一般客户/部门经理接待 | 150-300 |\n| 日常工作餐 | 50-100 |\n\n[资料3]\n【README > 文档清单 > 04-费用报销标准】\n### 04-费用报销标准\n| 文档 | 内容 |\n|---|---|\n| 差旅费标准 | 交通、住宿、伙食补助、市内交通 |\n| 业务招待费标准 | 人均标准、陪餐人数、税务规定 |\n| 其他费用标准 | 办公费、通讯费、培训费、会议费 |",
+          "source_count": 3
+        },
+        "ok": true
+      },
+      {
+        "step": 10,
+        "kind": "tool_result",
+        "text": "",
+        "tool_name": "rag_policy_search_tool",
+        "tool_args": {},
+        "tool_result": {
+          "query": "业务招待费报销标准 人均标准 审批要求",
+          "policy_text": "[资料1]\n【通用企业报销制度 > 第五章 业务招待费报销标准 > 第十九条 审批要求】\n### 第十九条 审批要求\n1. 业务招待前必须填写《业务招待申请单》，注明招待对象、人数、事由、预计金额\n2. 未经审批的业务招待费不予报销\n3. 陪餐人数不得超过接待对象人数的1/3\n\n[资料2]\n【通用企业报销制度 > 第五章 业务招待费报销标准 > 第二十条 标准】\n### 第二十条 标准\n| 级别 | 人均标准（元/人/次） |\n|---|---|\n| 重要客户/总经理接待 | 300-500 |\n| 一般客户/部门经理接待 | 150-300 |\n| 日常工作餐 | 50-100 |\n\n[资料3]\n【README > 文档清单 > 04-费用报销标准】\n### 04-费用报销标准\n| 文档 | 内容 |\n|---|---|\n| 差旅费标准 | 交通、住宿、伙食补助、市内交通 |\n| 业务招待费标准 | 人均标准、陪餐人数、税务规定 |\n| 其他费用标准 | 办公费、通讯费、培训费、会议费 |",
+          "source_count": 3
+        },
+        "ok": true
+      }
+    ],
+    "final_answer": "",
+    "structured": {},
+    "error": "Error code: 403 - {'error': {'message': 'Access to model denied. Please make sure you are eligible for using the model.', 'id': 'd2611f22-eba0-9e34-b9cf-ccae51409097', 'type': 'AccessDenied.Unpurchased', 'code': 'AccessDenied.Unpurchased'}}"
+  },
+  "guard_report": {
+    "original_verdict": null,
+    "final_verdict": "不通过",
+    "overridden": false,
+    "errors": [
+      "结论取值非法：None，只能是「通过」或「不通过」"
+    ],
+    "warnings": [
+      "模型自评置信度偏低（0.50），建议人工复核"
+    ]
+  },
+  "reflection": {
+    "enabled": true,
+    "triggered": true,
+    "signals": [
+      {
+        "name": "置信度水平",
+        "level": "warn",
+        "detail": "置信度 0.50 偏低"
+      }
+    ],
+    "second_answer": "",
+    "second_structured": {},
+    "second_trace": {
+      "steps": [],
+      "final_answer": "",
+      "structured": {},
+      "error": "Error code: 403 - {'error': {'message': 'Access to model denied. Please make sure you are eligible for using the model.', 'id': '7f7c8015-1fa2-9ffb-8c9f-7d19a74701f5', 'type': 'AccessDenied.Unpurchased', 'code': 'AccessDenied.Unpurchased'}}"
+    }
+  },
+  "meta": {
+    "elapsed_sec": 14.8,
+    "model": "qwen3.8-max"
+  }
+}

@@ -1,14 +1,15 @@
 # -*- coding: utf-8 -*-
 """报销单详情：从我的报销单点击“查看”后跳转进来（不在侧边栏显示）"""
-import importlib  # 用于重新加载数据库模块，避免热重载时用到旧代码
+import importlib
+import json  # 用于重新加载数据库模块，避免热重载时用到旧代码
 from datetime import datetime  # 记录申诉提交时间
 
 import streamlit as st  # 导入 Streamlit
 
 import database.db as _db  # 引入数据库模块（查报销单 / 查发票 / 删报销单）
-from utils.audit_verdict import normalize_audit, extract_verdict  # 结论规范化工具
+from utils.audit_verdict import normalize_audit, resolve_final_verdict  # 结论规范化 + 取终审结论
 from utils.expense_form import normalize_ext_fields  # 分类扩展字段
-from utils.current_user import get_current_employee_id  # 当前登录员工
+from utils.current_user import get_current_employee_id, get_current_employee  # 当前登录员工（含职级）
 from pipeline import run_expense_form_audit, format_anomaly_for_user  # 终审流程
 
 _db = importlib.reload(_db)  # 强制重新加载，保证拿到最新版本的函数
@@ -66,6 +67,13 @@ with st.container(key="pagehead"):  # 统一页头容器：样式由 app.py 统�
             )
         else:  # 没查到：只显示通用说明
             st.caption("查看报销单内容、关联发票与财务终审结论")  # 灰色说明
+        _current_emp = get_current_employee()  # 当前身份（含姓名 / 部门 / 职级）
+        if _current_emp:  # 取到员工信息才显示这一行
+            # 让用户看到报销人职级：这是费用标准（住宿费等）实际使用的核算档位
+            st.caption(
+                f"报销人：{_current_emp.get('name')} · {_current_emp.get('department')} · "
+                f"职级 {_current_emp.get('level')}"
+            )
     with head_r:  # 右侧：返回按钮
         if st.button("← 返回我的报销单", use_container_width=True):  # 点击返回
             st.switch_page("pages/2_我的报销单.py")  # 跳回我的报销单页
@@ -231,6 +239,83 @@ if audit.get("agent_answer"):  # 有 Agent 回答文本才显示
     st.markdown("### 审核分析")  # 大标题，与截图格式一致
     st.markdown(audit["agent_answer"])  # 用markdown渲染，支持标题/列表/加粗等格式
 
+# ---------------------------------------------------------------------------
+# AI审核决策过程（折叠时间轴）
+# ---------------------------------------------------------------------------
+trace_data = audit.get("trace") or {}
+trace_steps = trace_data.get("steps") or []
+if trace_steps:
+    with st.expander("AI审核决策过程（点击展开查看Agent思考与工具调用）", expanded=False):
+        st.caption("以下为AI审核员在本次审核中的完整推理轨迹：")
+        for step in trace_steps:
+            step_kind = step.get("kind", "")
+            step_text = step.get("text", "")
+            tool_name = step.get("tool_name", "")
+            tool_args = step.get("tool_args", {})
+            tool_result = step.get("tool_result", {})
+
+            if step_kind == "thinking":
+                clean = step_text.lstrip("#").strip()
+                display = clean[:200] + ("..." if len(clean) > 200 else "")
+                st.markdown(f"💭 **思考**：{display}")
+            elif step_kind == "tool_call":
+                st.markdown(f"🔧 **调用工具**：`{tool_name}`")
+                st.code(json.dumps(tool_args, ensure_ascii=False, indent=2), language="json")
+            elif step_kind == "tool_result":
+                st.markdown(f"📦 **工具返回**：`{tool_name}`")
+                st.code(json.dumps(tool_result, ensure_ascii=False, indent=2)[:500], language="json")
+            elif step_kind == "answer":
+                clean = step_text.lstrip("#").strip()
+                display = clean[:200] + ("..." if len(clean) > 200 else "")
+                st.markdown(f"✅ **最终回答**：{display}")
+            elif step_kind == "structured":
+                st.markdown(f"📋 **结构化裁决**：结论 = {step_text}")
+            st.divider()
+
+# ---------------------------------------------------------------------------
+# 制度依据（引用溯源高亮）：结论引用的条款 ↔ RAG检索到的原文
+# ---------------------------------------------------------------------------
+structured_data = audit.get("structured") or {}
+citations = structured_data.get("citations") or []
+# 从trace里取出RAG工具返回的制度原文
+rag_policy_texts = []
+for step in (trace_steps or []):
+    if step.get("tool_name") == "rag_policy_search_tool":
+        tr = step.get("tool_result") or {}
+        pt = tr.get("policy_text") or ""
+        if pt:
+            rag_policy_texts.append(pt)
+
+if citations or rag_policy_texts:
+    with st.expander("制度依据（引用溯源）：结论引用的条款 ↔ 检索原文", expanded=False):
+        if citations:
+            st.markdown("**本次审核引用的制度条款：**")
+            for c in citations:
+                st.markdown(f"📌 {c}")
+            st.markdown("")
+        if rag_policy_texts:
+            st.markdown("**RAG检索到的制度原文：**")
+            for i, pt in enumerate(rag_policy_texts, 1):
+                with st.container(border=True):
+                    st.caption(f"检索结果 {i}")
+                    st.write(pt[:800] + ("..." if len(pt) > 800 else ""))
+
+# ---------------------------------------------------------------------------
+# 防幻觉校验报告（折叠面板）
+# ---------------------------------------------------------------------------
+guard = audit.get("verdict_guard") or {}
+if guard:
+    with st.expander("防幻觉校验报告（点击展开查看逐项检查）", expanded=False):
+        st.caption(f"校验结论：{'通过' if guard.get('ok') else '存在问题'}")
+        if guard.get("errors"):
+            st.error(f"错误项：{'; '.join(guard['errors'])}")
+        if guard.get("warnings"):
+            st.warning(f"警告项：{'; '.join(guard['warnings'])}")
+        for check in guard.get("checks", []):
+            level = check.get("level", "")
+            icon = "✅" if level == "pass" else ("⚠️" if level == "warn" else "❌")
+            st.markdown(f"{icon} **{check['name']}**：{check['detail']}")
+
 # 按钮区上方灰线：内联样式收紧上下间距（Streamlit 默认 hr 上下各约 1rem 太松）
 st.markdown(
     "<hr style='margin:4px 0 10px 0; border:none; border-top:1px solid #E2E8F0;'>",
@@ -298,20 +383,59 @@ if (form.get("status") or "") in ("已驳回", "待财务终审", "草稿"):  # 
                     "ext_fields": form.get("ext_fields"),
                     "detail_items": form.get("detail_items"),
                 }
+                # ---------- 实时渲染审核过程 ----------
+                st.markdown("### AI审核过程")
+                timeline_container = st.container()
+                step_count = [0]  # 用list包装以便闭包修改
+
+                def on_audit_event(event):
+                    """Agent每跑一步就实时渲染到页面上。"""
+                    etype = event.get("type", "")
+                    with timeline_container:
+                        if etype == "thinking":
+                            st.markdown(f"💭 **思考**：{event.get('text', '')[:150]}")
+                        elif etype == "tool_call":
+                            st.markdown(f"🔧 **调用工具**：`{event.get('tool_name', '')}`")
+                        elif etype == "tool_result":
+                            st.markdown(f"📦 **工具返回**：`{event.get('tool_name', '')}` 完成")
+                        elif etype == "answer":
+                            st.markdown(f"✅ **最终回答生成中...**")
+                        elif etype == "structured":
+                            st.markdown(f"📋 **结构化裁决完成**")
+                        elif etype == "reflection_start":
+                            st.markdown(f"🔁 **{event.get('text', '')}**")
+                        elif etype == "reflection_result":
+                            st.markdown(f"🔁 **{event.get('text', '')}**")
+
                 with st.spinner("正在执行风控检测和AI终审，请稍候..."):
                     audit_result = run_expense_form_audit(
                         invoice_data, agent_payload,
                         exclude_form_id=form_id,
                         employee_id=get_current_employee_id(),
+                        on_event=on_audit_event,
                     )
-                verdict = extract_verdict(audit_result.get("answer")) or "不通过"
+
+                # 取终审结论
+                verdict = resolve_final_verdict(audit_result) or "不通过"
                 new_status = "已通过" if verdict == "通过" else "已驳回"
+
+                # 提取运行轨迹，存进数据库供详情页展示
+                trace_data = {}
+                agent_obj = audit_result.get("agent")
+                if agent_obj and hasattr(agent_obj, "last_trace"):
+                    trace_data = agent_obj.last_trace.to_dict()
+                guard_report = audit_result.get("verdict_guard") or {}
+
                 update_expense_form_audit(
                     form_id,
                     audit_result={
                         "final_result": verdict,
                         "agent_answer": audit_result.get("answer"),
+                        "structured": audit_result.get("verdict") or {},
                         "anomaly_check": audit_result.get("anomaly_check"),
+                        "trace": trace_data,
+                        "verdict_guard": guard_report,
+                        "reflection": audit_result.get("reflection") or {},
                         "checked_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                     },
                     status=new_status,
@@ -345,3 +469,5 @@ if (form.get("status") or "") in ("已驳回", "待财务终审", "草稿"):  # 
                 st.session_state.pop("expense_form_id", None)
                 st.success("已删除，可回到票夹重新填写")
                 st.switch_page("pages/2_我的报销单.py")
+
+

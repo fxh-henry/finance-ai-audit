@@ -19,7 +19,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 import re
 from datetime import datetime, timedelta
 from database.db import is_invoice_exists
-from config.settings import COMPANY_NAME, COMPANY_TAX_ID
+from config.settings import COMPANY_NAME, COMPANY_TAX_ID, HEADER_STRICT, ACCEPTED_BUYERS
 from rag.utils.logger import info, success, warn, error
 
 
@@ -91,6 +91,44 @@ def make_result(check_name, passed, message, level="error"):
 
 
 # ============================================================================
+# 抬头匹配工具：判断发票购买方是否属于「本公司 或 已知关联主体」
+# ============================================================================
+def _match_buyer(invoice_data):
+    """
+    判断发票购买方是否命中「本公司 或 白名单主体」。
+
+    为什么单独抽一个函数：名称校验和税号校验要用同一套匹配口径，
+    两处各写一遍会漂移（例如名称支持白名单、税号不支持）。
+
+    参数：
+        invoice_data: 发票识别结果字典
+    返回：
+        (matched, hit_by, buyer_name, buyer_tax_id)
+        matched=True 命中；hit_by 说明是靠名称还是靠税号命中的（"name" / "tax_id" / ""）
+        matched=False 表示不在已知主体内，级别由 HEADER_STRICT 决定
+    """
+    buyer_name = (invoice_data.get("购买方名称") or "").strip()  # 票面购买方名称，去空格
+    buyer_tax_id = (invoice_data.get("购买方税号") or "").strip()  # 票面购买方税号，去空格
+
+    # 1) 先比对本公司（名称或税号命中任一即可，避免票面只印了其中一项时误判）
+    if buyer_name and buyer_name == COMPANY_NAME.strip():
+        return True, "name", buyer_name, buyer_tax_id  # 名称命中本公司
+    if buyer_tax_id and buyer_tax_id == COMPANY_TAX_ID.strip():
+        return True, "tax_id", buyer_name, buyer_tax_id  # 税号命中本公司
+
+    # 2) 再比对白名单里的关联主体
+    for item in (ACCEPTED_BUYERS or []):  # 逐条比对
+        name = (item.get("name") or "").strip()  # 白名单主体名称
+        tax_id = (item.get("tax_id") or "").strip()  # 白名单主体税号
+        if name and buyer_name and buyer_name == name:
+            return True, "name", buyer_name, buyer_tax_id  # 名称命中白名单
+        if tax_id and buyer_tax_id and buyer_tax_id == tax_id:
+            return True, "tax_id", buyer_name, buyer_tax_id  # 税号命中白名单
+
+    return False, "", buyer_name, buyer_tax_id  # 都没命中
+
+
+# ============================================================================
 # 校验1：必填字段完整性
 # ============================================================================
 def check_required_fields(invoice_data):
@@ -117,37 +155,44 @@ def check_required_fields(invoice_data):
 # 校验2：购买方名称校验（抬头校验）
 # ============================================================================
 def check_buyer_name(invoice_data):
-    """检查购买方名称是否为本公司"""
-    buyer_name = invoice_data.get("购买方名称", "")
+    """检查购买方名称是否为本公司（或已知关联主体）"""
+    matched, hit_by, buyer_name, _ = _match_buyer(invoice_data)  # 用统一口径匹配
 
-    # 去除空格后比较（避免"有限公司 "和"有限公司"被判定为不同）
-    if buyer_name.strip() == COMPANY_NAME.strip():
+    if buyer_name and buyer_name == COMPANY_NAME.strip():  # 与配置完全一致
         return make_result("购买方名称校验", True, f"购买方名称正确：{buyer_name}")
-    else:
-        return make_result(
-            "购买方名称校验",
-            False,
-            f"购买方名称不符：发票上是[{buyer_name}]，本公司是[{COMPANY_NAME}]",
-            "error"
-        )
+    if matched and hit_by == "name":  # 命中白名单里的关联主体
+        return make_result("购买方名称校验", True, f"购买方名称正确（关联主体）：{buyer_name}")
+    if matched:  # 靠税号命中：名称写法不同但主体可确认
+        return make_result("购买方名称校验", True, f"名称[{buyer_name}]与本公司写法不同，但税号命中已知主体")
+
+    # 没命中任何已知主体：按严格模式决定是拦截还是提醒
+    level = "error" if HEADER_STRICT else "warning"  # 严格模式拦截，宽松模式只提醒
+    message = f"购买方名称不在已知主体内：发票上是[{buyer_name}]，本公司是[{COMPANY_NAME}]"
+    if not HEADER_STRICT:  # 宽松模式补一句，告诉人该怎么处理
+        message += "；请人工确认抬头归属，或在 config/settings.py 的 ACCEPTED_BUYERS 中补充该主体"
+    return make_result("购买方名称校验", False, message, level)
 
 
 # ============================================================================
 # 校验3：购买方税号校验
 # ============================================================================
 def check_buyer_tax_id(invoice_data):
-    """检查购买方税号是否为本公司税号"""
-    buyer_tax_id = invoice_data.get("购买方税号", "")
+    """检查购买方税号是否为本公司税号（或已知关联主体税号）"""
+    matched, hit_by, _, buyer_tax_id = _match_buyer(invoice_data)  # 用统一口径匹配
 
-    if buyer_tax_id.strip() == COMPANY_TAX_ID.strip():
+    if buyer_tax_id and buyer_tax_id == COMPANY_TAX_ID.strip():  # 与配置完全一致
         return make_result("购买方税号校验", True, "购买方税号正确")
-    else:
-        return make_result(
-            "购买方税号校验",
-            False,
-            f"购买方税号不符：发票上是[{buyer_tax_id}]，本公司是[{COMPANY_TAX_ID}]",
-            "error"
-        )
+    if matched and hit_by == "tax_id":  # 命中白名单里的关联主体税号
+        return make_result("购买方税号校验", True, f"购买方税号正确（关联主体）：{buyer_tax_id}")
+    if matched:  # 靠名称命中：税号与配置不同但主体可确认
+        return make_result("购买方税号校验", True, f"税号[{buyer_tax_id}]与配置不同，但名称命中已知主体")
+
+    # 没命中任何已知主体：按严格模式决定是拦截还是提醒
+    level = "error" if HEADER_STRICT else "warning"  # 严格模式拦截，宽松模式只提醒
+    message = f"购买方税号不在已知主体内：发票上是[{buyer_tax_id}]，本公司是[{COMPANY_TAX_ID}]"
+    if not HEADER_STRICT:  # 宽松模式补一句，告诉人该怎么处理
+        message += "；请人工确认抬头归属，或在 config/settings.py 的 ACCEPTED_BUYERS 中补充该主体"
+    return make_result("购买方税号校验", False, message, level)
 
 
 # ============================================================================

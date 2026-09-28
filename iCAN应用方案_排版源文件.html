@@ -1,0 +1,897 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8"><title>数电票智能预审 Agent · 应用方案</title><style>
+@page { size: A4; margin: 16mm 14mm 18mm 14mm; }
+* { box-sizing: border-box; }
+body { font-family: "Microsoft YaHei UI","Microsoft YaHei","PingFang SC","SimSun",sans-serif;
+  font-size: 10pt; line-height: 1.75; color: #1a1a1a; margin: 0;
+  -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+.cover { height: 245mm; display: flex; flex-direction: column; justify-content: center;
+         align-items: center; text-align: center; page-break-after: always; }
+.cover .badge { font-size: 11pt; letter-spacing: 2px; color: #4a6fa5; margin-bottom: 14mm; }
+.cover h1 { font-size: 27pt; color: #14315c; border: none; margin: 0 0 6mm 0; padding: 0;
+            line-height: 1.4; page-break-before: avoid; }
+.cover .sub { font-size: 13pt; color: #4a6fa5; margin-bottom: 16mm; }
+.cover .meta { font-size: 11pt; color: #333; line-height: 2.2; }
+.cover .meta b { color: #14315c; }
+h1 { font-size: 17pt; color: #14315c; border-bottom: 2.5px solid #14315c;
+     padding-bottom: 3mm; margin: 0 0 6mm 0; page-break-before: always; page-break-after: avoid; }
+h2 { font-size: 13.5pt; color: #1d4b8f; border-bottom: 1px solid #c9d7ea;
+     padding-bottom: 1.5mm; margin: 8mm 0 3.5mm 0; page-break-after: avoid; }
+h3 { font-size: 11.5pt; color: #24507f; margin: 6mm 0 2.5mm 0; page-break-after: avoid; }
+p { margin: 2.5mm 0; }
+ul, ol { margin: 2.5mm 0; padding-left: 7mm; }
+li { margin: 1.2mm 0; }
+table { border-collapse: collapse; width: 100%; margin: 3.5mm 0; font-size: 8.8pt; page-break-inside: auto; }
+th { background: #eaf1fa; color: #14315c; font-weight: 600; text-align: left;
+     border: 1px solid #c3d3e8; padding: 1.8mm 2.2mm; }
+td { border: 1px solid #d5dee9; padding: 1.8mm 2.2mm; vertical-align: top; }
+tbody tr:nth-child(even) { background: #f8fafd; }
+tr { page-break-inside: avoid; }
+code { font-family: Consolas,"Courier New",monospace; font-size: 9pt;
+       background: #f2f5f9; padding: 0.3mm 1mm; border-radius: 2px; }
+pre { background: #f6f8fb; border: 1px solid #dde5ef; border-left: 3px solid #7aa2d4;
+      padding: 3mm 3.5mm; margin: 3.5mm 0; page-break-inside: avoid; }
+pre code { background: none; padding: 0; font-size: 8.6pt; line-height: 1.55; }
+blockquote { margin: 3.5mm 0; padding: 2.5mm 4mm; background: #f7f9fc;
+             border-left: 3px solid #7aa2d4; color: #33475e; }
+blockquote p { margin: 1.2mm 0; }
+hr { border: none; border-top: 1px solid #d5dee9; margin: 6mm 0; }
+a { color: #1d4b8f; text-decoration: none; }
+.toc { background: #f8fafd; border: 1px solid #dde5ef; padding: 4mm 6mm; margin-bottom: 6mm; }
+.toc ul { list-style: none; padding-left: 4mm; }
+.toc > ul { padding-left: 0; }
+.toc li { margin: 1mm 0; font-size: 9.5pt; }
+strong { color: #0f2a4d; }
+</style></head><body>
+<div class="cover">
+  <div class="badge">2026 iCAN 大学生创新创业大赛 · AI 应用创新挑战赛</div>
+  <h1>数电票智能预审 Agent</h1>
+  <div class="sub">高校与中小企业财务报销智能审核系统 · 软件赛道</div>
+  <div class="meta">
+    <div><b>作品名称：</b>数电票智能预审 Agent（财务报销智能审核系统）</div>
+    <div><b>参赛赛道：</b>软件赛道（Agent 智能体 + 网页应用 + 企业服务）</div>
+    <div><b>参赛团队：</b>＿＿＿＿＿＿＿＿＿＿</div>
+    <div><b>团队成员：</b>＿＿＿＿＿＿＿＿＿＿</div>
+    <div><b>指导教师：</b>＿＿＿＿＿＿＿＿＿＿</div>
+    <div><b>提交日期：</b>2026 年 9 月</div>
+  </div>
+</div>
+<div class="toc"><span class="toctitle">目录</span><ul>
+<li><a href="#_1">一、项目背景</a><ul>
+<li><a href="#11-xml">1.1 政策背景：数电票的法定原件是 XML，不是图片</a></li>
+<li><a href="#12">1.2 业务背景：审核的重心应当前移</a></li>
+<li><a href="#13">1.3 一句话定位</a></li>
+<li><a href="#14">1.4 与现有方案的差异化</a></li>
+</ul>
+</li>
+<li><a href="#_2">二、痛点问题</a></li>
+<li><a href="#_3">三、需求分析</a><ul>
+<li><a href="#31">3.1 从痛点反推的四项硬需求</a></li>
+<li><a href="#32">3.2 关键技术判断：划定确定性边界</a></li>
+<li><a href="#33">3.3 非功能需求</a></li>
+</ul>
+</li>
+<li><a href="#_4">四、目标用户群体与功能需求</a><ul>
+<li><a href="#41">4.1 三类角色</a></li>
+<li><a href="#42">4.2 可验收的功能需求</a></li>
+<li><a href="#43">4.3 功能边界（本作品不做什么）</a></li>
+</ul>
+</li>
+<li><a href="#_5">五、开发工具</a></li>
+<li><a href="#_6">六、技术方案</a><ul>
+<li><a href="#61">6.1 总体架构</a></li>
+<li><a href="#62">6.2 三条设计红线</a></li>
+<li><a href="#63">6.3 关键实现</a></li>
+<li><a href="#64">6.4 效果验证</a></li>
+<li><a href="#65">6.5 稳定性与效率</a></li>
+</ul>
+</li>
+<li><a href="#_7">七、作品功能说明</a><ul>
+<li><a href="#71">7.1 发票识别</a></li>
+<li><a href="#72-12">7.2 基础合规校验（12 项）</a></li>
+<li><a href="#73-6">7.3 行为风控（6 项）</a></li>
+<li><a href="#74-llm">7.4 事由语义审核（LLM 语义判断）</a></li>
+<li><a href="#75-ai">7.5 费用标准工具（AI 唯一的数值来源）</a></li>
+<li><a href="#76-rag">7.6 制度 RAG 检索</a></li>
+<li><a href="#77-reviewagent-ai">7.7 ReviewAgent 终审（AI 核心）</a></li>
+<li><a href="#78">7.8 结构化裁决</a></li>
+<li><a href="#79-13">7.9 防幻觉校验（13 项交叉核对）</a></li>
+<li><a href="#710">7.10 反思机制</a></li>
+<li><a href="#711">7.11 票夹 · 报销单 · 详情</a></li>
+<li><a href="#712">7.12 帮助中心</a></li>
+</ul>
+</li>
+<li><a href="#_8">八、使用说明</a><ul>
+<li><a href="#81">8.1 用户操作流程</a></li>
+<li><a href="#82">8.2 交互指南</a></li>
+<li><a href="#83">8.3 界面与视觉规范</a></li>
+<li><a href="#84">8.4 演示要点</a></li>
+</ul>
+</li>
+<li><a href="#_9">九、应用前景</a><ul>
+<li><a href="#91">9.1 落地路径</a></li>
+<li><a href="#92">9.2 推广条件</a></li>
+<li><a href="#93">9.3 推广潜力</a></li>
+</ul>
+</li>
+<li><a href="#_10">十、商业模式</a></li>
+<li><a href="#_11">十一、边界与后续规划</a></li>
+</ul>
+</div>
+<blockquote>
+<p>2026 年 iCAN 大学生创新创业大赛 · AI 应用创新挑战赛 · 软件赛道
+面向高校与中小企业的数电票智能预审 Agent</p>
+</blockquote>
+<hr />
+<h2 id="_1">一、项目背景</h2>
+<h3 id="11-xml">1.1 政策背景：数电票的法定原件是 XML，不是图片</h3>
+<p>全面数字化电子发票（下称数电票）在全国推广后，有一个关键事实常被忽略：<strong>XML 才是法定原件</strong>，PDF 与版式文件在法律意义上只是阅读件。</p>
+<p>这件事的技术含义是：如果系统仍按「上传图片 → OCR → 存图」的老路走，它一开局就丢掉了最准确的那份数据，把后续所有判断都建立在二次识别的误差上。因此本作品把「XML 直解析」作为默认路径，只有拿到照片时才降级到 OCR。</p>
+<h3 id="12">1.2 业务背景：审核的重心应当前移</h3>
+<p>高校财务处与中小企业出纳的编制普遍偏紧。一张差旅报销单上，要核对抬头、税号、金额勾稽、住宿标准、是否重复报销……单张 3–8 分钟，一天看不了多少张。</p>
+<p>但仔细拆开就会发现：<strong>其中绝大多数判断本来就有唯一答案</strong>（金额加不加得起来、有没有超标、号码有没有重复），不该占用财务的时间；真正需要人来判断的，只有「这笔消费的性质是什么」这一小部分语义问题。</p>
+<p>于是本作品的核心判断是：</p>
+<blockquote>
+<p><strong>把有唯一答案的判断交给程序，把需要理解语义的判断交给 AI，并且让 AI 的每一条结论都能被程序核对。</strong></p>
+</blockquote>
+<p>这三句话构成了整个作品的技术骨架，也是它与「把单据全丢给大模型」的同类方案的分野。</p>
+<h3 id="13">1.3 一句话定位</h3>
+<p>面向高校与中小企业的<strong>数电票智能预审 Agent</strong> —— XML 原件直解析，规则先卡住硬伤，RAG 引用制度原文，Agent 给出可追溯、可追问的审核结论。定位为<strong>预审助手</strong>，不宣称替代财务终审。</p>
+<hr />
+<h3 id="14">1.4 与现有方案的差异化</h3>
+<table>
+<thead>
+<tr>
+<th>对比维度</th>
+<th>常见做法</th>
+<th>本作品的做法</th>
+<th>带来的差别</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>发票原件</td>
+<td>拍照 / PDF 再 OCR</td>
+<td><strong>XML 法定原件直解析</strong>，只有照片才降级 OCR</td>
+<td>从源头避免识别误差</td>
+</tr>
+<tr>
+<td>结论形态</td>
+<td>大模型输出一段自然语言，程序靠关键词猜结论</td>
+<td><strong>Pydantic 枚举字段</strong>，结论是可直接读的字段</td>
+<td>消除解析歧义；实测旧做法会把「超标，不通过」判成「通过」</td>
+</tr>
+<tr>
+<td>大模型的职责</td>
+<td>既算金额又下结论</td>
+<td><strong>金额一律由纯函数计算</strong>，模型只做语义理解与解释</td>
+<td>数值 100% 可复现，模型算错也影响不到金额</td>
+</tr>
+<tr>
+<td>结论可信度</td>
+<td>在提示词里写「不要胡说」</td>
+<td><strong>13 项防幻觉校验</strong>与工具返回值逐条对账，矛盾可改写结论</td>
+<td>把可信度做成工程约束，而不是模型的自觉</td>
+</tr>
+<tr>
+<td>驳回依据</td>
+<td>只写「不符合规定」</td>
+<td><strong>条款门禁</strong>：没有制度条款依据，不许判「不通过」</td>
+<td>每条驳回都能翻到制度原文</td>
+</tr>
+<tr>
+<td>异常行为</td>
+<td>事后审计才发现</td>
+<td><strong>6 项风控前置</strong>，并强制写进 Agent 上下文</td>
+<td>风险在预审环节就亮灯</td>
+</tr>
+<tr>
+<td>出错之后</td>
+<td>一次判定，错了就是错了</td>
+<td><strong>反思机制</strong>：可澄清的矛盾退回 Agent 再查一轮，且无新证据不许放宽结论</td>
+<td>有限成本的自我纠错</td>
+</tr>
+</tbody>
+</table>
+<h2 id="_2">二、痛点问题</h2>
+<table>
+<thead>
+<tr>
+<th>痛点</th>
+<th>现在怎么做</th>
+<th>后果</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>原件与识别不准</td>
+<td>拍照 / PDF 再 OCR</td>
+<td>号码、税额出错，后续所有结论都建立在错数据上</td>
+</tr>
+<tr>
+<td>硬伤靠人眼</td>
+<td>抬头、税号、金额勾稽逐项看</td>
+<td>漏检重复报销、过期票；单张 3–8 分钟</td>
+</tr>
+<tr>
+<td>制度检索靠翻文档</td>
+<td>财务口头解释</td>
+<td>同案不同判，员工反复改单</td>
+</tr>
+<tr>
+<td>异常行为难发现</td>
+<td>连号、拆单、临界金额靠经验</td>
+<td>风险事后才暴露，事后追责成本高</td>
+</tr>
+<tr>
+<td>结论不可追问</td>
+<td>驳回只写「不符合规定」</td>
+<td>咨询占满财务工作时间</td>
+</tr>
+</tbody>
+</table>
+<p><strong>这些痛点的共同结构</strong>：一张报销单上同时存在两类判断 ——</p>
+<ul>
+<li><strong>确定性问题</strong>：金额对不对、是否超标、是否重复。答案唯一，失误形式是<strong>漏检</strong>。</li>
+<li><strong>语义问题</strong>：这笔聚餐算不算业务招待、事由与发票内容是否对得上。答案依赖理解，失误形式是<strong>误判</strong>。</li>
+</ul>
+<p>两类错误的成因完全不同，需要不同的技术手段。而现有方案往往用同一种手段处理全部（全丢给人，或全丢给模型），这正是痛点长期存在的根本原因。</p>
+<hr />
+<h2 id="_3">三、需求分析</h2>
+<h3 id="31">3.1 从痛点反推的四项硬需求</h3>
+<table>
+<thead>
+<tr>
+<th>#</th>
+<th>需求</th>
+<th>为什么必须满足</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td><strong>识别要准</strong></td>
+<td>能拿到法定原件就不用 OCR；数据错了，后面全错</td>
+</tr>
+<tr>
+<td>2</td>
+<td><strong>能算的不问模型</strong></td>
+<td>金额勾稽、超标与否有唯一答案，模型算错一个数整张结论就废了</td>
+</tr>
+<tr>
+<td>3</td>
+<td><strong>要理解语义的才交给模型</strong></td>
+<td>这是规则写不完的部分，也是 AI 真正必须出场的地方</td>
+</tr>
+<tr>
+<td>4</td>
+<td><strong>结论必须能被追问</strong></td>
+<td>每条结论都要能回答「凭什么」，并指出依据来自哪个工具、哪条制度</td>
+</tr>
+</tbody>
+</table>
+<p>第 4 条是这套系统与「黑盒 AI」的分界线，也直接决定了后文技术方案里必须有<strong>防幻觉校验层</strong>。</p>
+<h3 id="32">3.2 关键技术判断：划定确定性边界</h3>
+<p>既然确定性问题与语义问题要分开处理，就必须明确一条边界，并且让程序去<strong>强制执行</strong>它，而不是靠提示词自觉：</p>
+<table>
+<thead>
+<tr>
+<th>归属</th>
+<th>判断内容</th>
+<th>由谁裁决</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>确定性侧</td>
+<td>金额勾稽、明细汇总、单价核对、日期期限、号码格式、重复检测、税率、抬头税号</td>
+<td>纯代码规则（毫秒级、结果唯一）</td>
+</tr>
+<tr>
+<td>确定性侧</td>
+<td>住宿 / 交通 / 伙食的金额标准核算</td>
+<td>纯函数工具（唯一数值来源）</td>
+</tr>
+<tr>
+<td>确定性侧</td>
+<td>重复 / 连号 / 拆分 / 临界 / 高频 / 行为画像</td>
+<td>纯 SQL 风控</td>
+</tr>
+<tr>
+<td>语义侧</td>
+<td>事由与业务的相关性、费用类型是否与票面一致、结论如何解释</td>
+<td>Agent + 大模型</td>
+</tr>
+</tbody>
+</table>
+<p>边界由<strong>校验层</strong>执行：一旦模型的结论与工具返回值矛盾，直接拦截或退回重查。</p>
+<h3 id="33">3.3 非功能需求</h3>
+<table>
+<thead>
+<tr>
+<th>维度</th>
+<th>要求</th>
+<th>落实方式</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>效率</td>
+<td>单张预审秒级；不把 token 浪费在规则能解决的事上</td>
+<td>12 项基础校验纯代码；校验不通过直接拦截，不进入模型</td>
+</tr>
+<tr>
+<td>稳定</td>
+<td>单张异常不能影响整批</td>
+<td>多张上传逐张处理；识别失败的发票照样生成卡片、置顶并附失败原因</td>
+</tr>
+<tr>
+<td>可信</td>
+<td>结论可复核</td>
+<td>13 项防幻觉校验 + 完整的工具调用轨迹留痕</td>
+</tr>
+<tr>
+<td>可演示</td>
+<td>评委能当场看懂 AI 做了什么</td>
+<td>Agent 推理过程实时渲染在页面上（工具名 / 参数 / 返回值 / 制度原文）</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="_4">四、目标用户群体与功能需求</h2>
+<h3 id="41">4.1 三类角色</h3>
+<table>
+<thead>
+<tr>
+<th>角色</th>
+<th>核心诉求</th>
+<th>对应功能</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>报销员工</strong></td>
+<td>上传发票、看预审结果、填单、被驳后知道怎么改</td>
+<td>发票上传、我的票夹、发票详情、报销单填写</td>
+</tr>
+<tr>
+<td><strong>财务初审</strong></td>
+<td>看规则结果、风控亮灯、Agent 依据，决定放行或退回</td>
+<td>我的报销单、报销单详情（含轨迹与校验报告）</td>
+</tr>
+<tr>
+<td><strong>制度管理员</strong></td>
+<td>维护知识库（住宿标准、招待规定、违规案例）</td>
+<td>帮助中心左侧制度文档导航（Markdown 即改即生效）</td>
+</tr>
+</tbody>
+</table>
+<h3 id="42">4.2 可验收的功能需求</h3>
+<ol>
+<li>上传数电票后 1 分钟内给出基础合规结论，并<strong>逐项</strong>列出通过 / 不通过。</li>
+<li>可一次上传多张，每张独立成卡，有问题的自动置顶。</li>
+<li>提交报销单时自动运行 6 项行为风控。</li>
+<li>终审结论必须携带「用了哪个工具、引用了哪条制度」。</li>
+<li>员工可针对本张发票追问，回答必须能展开制度原文。</li>
+<li><strong>基础校验不通过的发票不允许进入填单环节</strong>（准入闸门）。</li>
+<li>发票号码由系统从票夹带出，用户不手填。</li>
+</ol>
+<h3 id="43">4.3 功能边界（本作品不做什么）</h3>
+<ul>
+<li>不替代银行回单、预算占用、银企支付。</li>
+<li>不承诺图片发票 100% 识别率（演示以 XML / 版式 PDF 为准）。</li>
+<li>Agent 结论是预审建议，最终入账仍由财务确认。</li>
+</ul>
+<hr />
+<h2 id="_5">五、开发工具</h2>
+<table>
+<thead>
+<tr>
+<th>类别</th>
+<th>工具 / 库</th>
+<th>版本</th>
+<th>作用</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>开发语言</td>
+<td>Python</td>
+<td>3.11</td>
+<td>—</td>
+</tr>
+<tr>
+<td>界面框架</td>
+<td>Streamlit 多页应用</td>
+<td>1.63.0</td>
+<td><code>st.navigation</code> 路由 + 注入 CSS 统一全站视觉</td>
+</tr>
+<tr>
+<td>智能体框架</td>
+<td>LangGraph <code>create_react_agent</code> + LangChain Core</td>
+<td>1.6.1</td>
+<td>ReAct 循环：思考 → 调工具 → 观察 → 裁决</td>
+</tr>
+<tr>
+<td>大模型</td>
+<td>阿里云百炼 通义千问（OpenAI 兼容接口）</td>
+<td><code>qwen3.8-max</code></td>
+<td>仅承担语义理解与解释</td>
+</tr>
+<tr>
+<td>结构化输出</td>
+<td>Pydantic</td>
+<td>2.13.4</td>
+<td>把审核结论钉成枚举字段</td>
+</tr>
+<tr>
+<td>检索</td>
+<td>自研 BM25 + <code>m3e-small</code> 向量模型 + jieba</td>
+<td>—</td>
+<td>制度条款定位</td>
+</tr>
+<tr>
+<td>文档解析</td>
+<td>pdfplumber</td>
+<td>0.11.10</td>
+<td>按文字块坐标还原明细表</td>
+</tr>
+<tr>
+<td>OCR</td>
+<td>阿里云 OCR <code>RecognizeGeneralStructure</code></td>
+<td>—</td>
+<td>JPG / PNG 兜底识别</td>
+</tr>
+<tr>
+<td>数据库</td>
+<td>SQLite</td>
+<td>—</td>
+<td>发票、明细、报销单、员工</td>
+</tr>
+<tr>
+<td>评测</td>
+<td>自研消融 / 注入脚本</td>
+<td>—</td>
+<td>量化 AI 与各校验层的实际贡献</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="_6">六、技术方案</h2>
+<h3 id="61">6.1 总体架构</h3>
+<pre><code>发票文件（XML / PDF / 图片）
+        │
+        ▼  识别层：XML 直读法定原件 ｜ PDF 坐标法还原明细 ｜ 图片 OCR 兜底
+   结构化发票数据
+        │
+        ▼  ① 12 项基础合规校验（纯代码 · 毫秒级 · 结果唯一）
+        │     └─ 不通过 → 直接拦截，不进模型，不浪费一次调用
+        ▼  票夹（原件 + 识别结果 + 校验结论一起入库）
+        │
+        ▼  员工填写报销单（统一主表 + 分类扩展 · 发票明细自动注入）
+        │
+        ▼  ② 6 项行为风控（纯 SQL + 代码 · 无 AI）
+        ▼  ③ 费用标准工具（纯函数 · AI 唯一的数值来源）
+        ▼  ④ 制度 RAG（只检索原文 · 不做判断）
+        ▼  ⑤ ReviewAgent（ReAct：自主决定调哪个工具、综合、解释）
+        ▼  ⑥ 结构化裁决（schema 钉死枚举，结论是字段不是散文）
+        ▼  ⑦ 13 项防幻觉校验（与工具返回值逐条对账，可改写结论）
+        ▼  ⑧ 反思（仅一次：可澄清的矛盾退回 Agent 再查一轮）
+   最终裁决 ──▶ 报销单详情（结论 + 推理轨迹 + 校验报告）
+</code></pre>
+<h3 id="62">6.2 三条设计红线</h3>
+<p><strong>红线一：金额不交给大模型算。</strong>
+所有数值判定都在纯函数里完成，模型只负责判断费用类型、决定调用哪个工具、把结论解释给人听。校验层是这条边界的执行者——模型结论一旦和工具返回值矛盾，直接拦截。</p>
+<p><strong>红线二：结论不靠文本猜测。</strong>
+早期实现让模型输出一段自然语言，程序再用「关键词谁先出现」去猜结论。实测反例：</p>
+<pre><code>输入：我通过调用费用标准工具核对后确认，该笔住宿费超标，审核不通过。
+旧逻辑输出：通过            ← 一张超标发票被放行
+</code></pre>
+<p>现在结论被定义为 Pydantic 枚举字段，模型在解码阶段只能往 <code>verdict</code> 里填「通过」或「不通过」。<strong>结论从「需要猜的文本」变成「可以直接读的字段」。</strong></p>
+<p><strong>红线三：没有条款依据，不许判「不通过」。</strong>
+制度门禁规定：判「不通过」却给不出制度条款 → 硬拦截，改为「无依据 → 转人工」。这把「引用溯源」从界面装饰升级成了硬约束。</p>
+<h3 id="63">6.3 关键实现</h3>
+<p><strong>识别层</strong>：数电票 XML 直读结构化字段；版式 PDF 用 pdfplumber 提取文字块坐标，找表头行后用各列中心点划分列边界，再按 y 坐标聚行还原明细表；对 PDF 中「数量单价」被粘成一个长串的脏数据，用穷举切分求 <code>数量 × 单价 ≈ 金额</code> 的最小误差解。多张上传时按文件 SHA1 指纹缓存，只解析真正的新文件。</p>
+<p><strong>校验层</strong>：12 项基础合规 + 6 项行为风控，全部纯代码。风控覆盖重复报销、连号发票、拆分报销、金额临界（审批阈值 95% 以上）、高频报销（部门人均 2 倍）、员工行为画像。</p>
+<p><strong>制度层</strong>：知识库为 Markdown，按标题层级分块（最大 300 字、块间重叠 2 句）；BM25（专有名词加权）与向量检索双路召回后加权融合，返回条款原文与出处，让「依据」可被引用、可被点击展开。</p>
+<p><strong>Agent 层</strong>：<code>ReviewAgent</code> 基于 LangGraph ReAct 循环，挂载费用标准工具与制度检索工具；<code>AgentTrace</code> 逐步记录思考、工具调用参数、工具返回原文与最终结论，一份数据两用——页面渲染时间轴，校验层逐条对账。<code>ConsultAgent</code> 负责帮助中心问答，携带本张发票的上下文。</p>
+<p><strong>后处理层</strong>：</p>
+<ul>
+<li><strong>结构化裁决</strong>：结论、费用类型、理由清单、证据链、条款引用、置信度、是否转人工，全部固化为字段。证据的 <code>source</code> 只能填 5 个白名单来源之一，<code>fact</code> 中的数字必须与来源返回值完全一致。</li>
+<li><strong>13 项防幻觉校验</strong>：结论取值合法 / 证据来源合法 / 工具调用可溯源 / 结论与证据自洽 / 结论未遗漏工具判定 / 风控高危已被吸收 / 金额可溯源 / 条款引用可溯源 / 通过需有证据 / 条款门禁（不通过需依据）/ 条款门禁（通过需计算）/ 人工确认已吸收 / 置信度水平。</li>
+<li><strong>反思机制</strong>：分流（挑出可澄清的矛盾）→ 指令（要求追加检索、补齐参数）→ 收敛（第二轮必须复检，且<strong>没有新证据就不许放宽结论</strong>）。与校验层共享同一份判据，避免两处口径漂移；只给一次机会，卡住成本。</li>
+</ul>
+<h3 id="64">6.4 效果验证</h3>
+<p>我们为 AI 与各校验层建立了可复现的评测（<code>eval/</code>，不修改主流程任何代码）。</p>
+<p><strong>用例集</strong>：24 条，全部有制度唯一确定的金标准。其中 8 条为制度金额类（住宿城市 × 职级 × 金额），12 条为语义一致性类（票面与报销单是否对得上），4 条为语义陷阱类（金额全合规，唯一违规点在语义）。<strong>其中 12 条为对抗样本</strong>——金额落在标准内，只看数字永远判不出来。</p>
+<p><strong>AI 相对纯规则引擎的增量</strong></p>
+<table>
+<thead>
+<tr>
+<th>类别</th>
+<th>条数</th>
+<th>纯规则判对</th>
+<th>转人工</th>
+<th>Agent 判对</th>
+<th>增量</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>制度金额类</td>
+<td>8</td>
+<td>7</td>
+<td>0</td>
+<td>7</td>
+<td>+0.0pp</td>
+</tr>
+<tr>
+<td>语义一致性类</td>
+<td>12</td>
+<td>3</td>
+<td>3</td>
+<td>10</td>
+<td><strong>+58.3pp</strong></td>
+</tr>
+<tr>
+<td>语义陷阱类</td>
+<td>4</td>
+<td>0</td>
+<td>2</td>
+<td>4</td>
+<td><strong>+100.0pp</strong></td>
+</tr>
+<tr>
+<td><strong>合计</strong></td>
+<td><strong>24</strong></td>
+<td><strong>10（41.7%）</strong></td>
+<td><strong>5</strong></td>
+<td><strong>21（87.5%）</strong></td>
+<td><strong>+45.8pp</strong></td>
+</tr>
+</tbody>
+</table>
+<p><strong>对抗样本子集（12 条）：纯规则 0/12（0%），Agent 12/12（100%）。</strong></p>
+<blockquote>
+<p>这张表说明了架构的合理性：<strong>金额类的活，规则干得和 AI 一样好（7/8 打平）；语义类的活，规则只有 18.8%，AI 达到 87.5%。</strong> 规则层对没有标准可依的费用类型返回「转人工」而不是硬判，避免冤枉合规单。</p>
+</blockquote>
+<p><strong>结构化裁决的价值（陷阱句注入，120 条文本）</strong>：旧字符串位置解析 40/120（33.3%），结构化裁决 21/24（87.5%），<strong>净收益 +54.2 个百分点</strong>；其中错误放行（真值不通过被判成通过）70 条，放行率 100%。</p>
+<p><strong>否定嵌套句专项（96 条文本）</strong>：旧解析器判对 <strong>0/96</strong>。真值「不通过」写成「不予通过 / 无法通过 / 不能予以通过」——句中根本没有「不通过」三连字，字符串匹配直接判成通过；真值「通过」写成「不存在……不通过的情形」——双重否定被按位置判成不通过。结构化裁决读枚举字段，对措辞完全免疫。</p>
+<p><strong>防幻觉校验的价值（注入 101 处已知幻觉）</strong>：任意报警 101/101（100%），硬拦截 42/101（41.6%），干净样本误伤 <strong>0/9（0%）</strong>。硬拦截只对能交叉核对的幻觉类型生效，语义类幻觉仅告警不拦截——这是有意的保守设计，宁可提示也不误改。</p>
+<p><strong>成本</strong>：单用例平均 59.3 秒；消融实验的额外 token 消耗为 <strong>0</strong>（五组共用同一份模型输出，差异只来自后处理层）。</p>
+<h3 id="65">6.5 稳定性与效率</h3>
+<ul>
+<li><strong>分层拦截</strong>：基础校验不通过就不进模型，既省钱，也避免模型被脏数据带偏。</li>
+<li><strong>失败可见</strong>：识别失败或校验不过的发票照样生成卡片、置顶并附失败原因，不静默丢弃。</li>
+<li><strong>增量识别</strong>：按内容指纹缓存，重复上传不做重复解析。</li>
+<li><strong>可复现</strong>：评测与主流程完全解耦，任何时候都能重跑并复现文中每一个数字。</li>
+</ul>
+<p><strong>效率口径（如实标注测量边界）</strong></p>
+<table>
+<thead>
+<tr>
+<th>环节</th>
+<th>耗时</th>
+<th>来源</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>单张基础合规校验（12 项）</td>
+<td>毫秒级</td>
+<td>纯函数，无需网络</td>
+</tr>
+<tr>
+<td>单张 Agent 终审（含模型调用与制度检索）</td>
+<td>平均 59.3 秒</td>
+<td>本作品 24 条用例实测</td>
+</tr>
+<tr>
+<td>人工初审单张单据</td>
+<td>约 3–8 分钟</td>
+<td>行业经验估计，<strong>非本作品实测</strong>，仅作量级参考</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p>需要说明的是：预审并不能替代人工终审。它的价值在于把「有唯一答案的判断」整体从人工环节移除，让财务只看真正需要判断的那部分。</p>
+</blockquote>
+<hr />
+<h2 id="_7">七、作品功能说明</h2>
+<blockquote>
+<p>每项写清三件事：<strong>功能是什么 / 没有 AI 会怎样 / AI 的增量在哪</strong>。</p>
+</blockquote>
+<p><strong>AI 在作品中的核心作用（总览）</strong></p>
+<p>AI 不是这里的装饰，也不是「把单据整体丢给大模型」。它恰好出现在<strong>规则做不到、而判断又必须做</strong>的位置：</p>
+<table>
+<thead>
+<tr>
+<th>AI 出场点</th>
+<th>承担什么</th>
+<th>为什么规则替代不了</th>
+<th>被什么约束</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Agent 终审</td>
+<td>判断事由与业务的相关性、费用类型是否与票面一致</td>
+<td>语义判断无法穷举成 if-else</td>
+<td>结构化裁决 + 13 项防幻觉校验</td>
+</tr>
+<tr>
+<td>事由语义审核</td>
+<td>判断报销事由与发票内容、费用类型三者是否一致</td>
+<td>同上，属语义判断</td>
+<td>不通过时弹窗拦截；结果带缓存</td>
+</tr>
+<tr>
+<td>工具调度</td>
+<td>自主决定调费用标准工具还是制度检索、参数怎么填</td>
+<td>不同单据需要的依据不同</td>
+<td>工具调用全轨迹留痕，校验层逐条对账</td>
+</tr>
+<tr>
+<td>结论解释</td>
+<td>把「超标 80 元」翻译成员工能懂的话与整改建议</td>
+<td>生成式表达</td>
+<td>其中金额必须与工具返回值完全一致</td>
+</tr>
+<tr>
+<td>自主纠错</td>
+<td>发现矛盾后追加检索、修正结论</td>
+<td>事前无法预知所有矛盾形态</td>
+<td>只允许一轮，且无新证据不许放宽结论</td>
+</tr>
+<tr>
+<td>帮助中心问答</td>
+<td>针对本张发票引用制度条款作答</td>
+<td>问答空间是开放的</td>
+<td>回答必须能展开制度原文</td>
+</tr>
+</tbody>
+</table>
+<p>一句话概括：<strong>规则负责「判得准」，AI 负责「看得懂、说得清」，校验层负责「不许胡说」。</strong> 三者缺一，这个系统要么不可信，要么不实用。</p>
+<h3 id="71">7.1 发票识别</h3>
+<ul>
+<li><strong>功能</strong>：一次可选多张，XML 数电票直读法定原件；版式 PDF 用坐标法还原明细表；图片走 OCR 兜底。</li>
+<li><strong>没有 AI</strong>：识别本身是确定性问题，本就不该用 AI——这是刻意设计。</li>
+<li><strong>AI 增量</strong>：对 PDF 中被粘成 <code>12437.735849056604</code> 这类脏数据，程序用穷举切分求「数量 × 单价 ≈ 金额」的最小误差解，把不可读的表格救回来。</li>
+</ul>
+<h3 id="72-12">7.2 基础合规校验（12 项）</h3>
+<ul>
+<li><strong>功能</strong>：抬头、税号、金额勾稽、明细汇总、单价、日期期限、号码格式、重复报销、税率、大小写一致等，逐项给出通过 / 不通过与原因。</li>
+<li><strong>AI 增量</strong>：<strong>刻意不用 AI</strong>。有唯一答案的事交给代码，才谈得上「快」和「确定」。它是整个流程的准入闸门。</li>
+</ul>
+<h3 id="73-6">7.3 行为风控（6 项）</h3>
+<ul>
+<li><strong>功能</strong>：重复报销、连号发票、拆分报销、金额临界、高频报销、员工行为画像。</li>
+<li><strong>AI 增量</strong>：风控结果作为上下文注入 Agent 提示词，并要求结论<strong>点名风险</strong>，避免出现「模型装作没看见」。重复、连号、拆分是行业公认的舞弊模式，这条决定了作品「解决的是真问题」。</li>
+</ul>
+<h3 id="74-llm">7.4 事由语义审核（LLM 语义判断）</h3>
+<ul>
+<li><strong>功能</strong>：员工填完报销事由后，由一个独立的 LLM 环节判断「报销事由 ↔ 发票内容（销售方、项目名称）↔ 所选费用类型」三者是否逻辑一致，输出通过 / 警告 / 不通过及理由。</li>
+<li><strong>没有 AI</strong>：这是纯语义判断，规则写不出来。「住宿费发票却写办公用品采购」这类不一致，只有模型能发现。</li>
+<li><strong>AI 增量</strong>：把「事由是否说得通」这道判断从人工环节前移到填单环节。事由不通过时弹出对话框拦截保存，员工可查看详细分析后修正，或显式选择「确认保存草稿」；语义审核结果有缓存，避免同一份内容反复调用模型。</li>
+<li><strong>与 Agent 终审的分工</strong>：事由语义审核是<strong>单点判断</strong>（只看事由与票面），Agent 终审是<strong>综合裁决</strong>（还要结合费用标准、风控制结果、制度条款）。</li>
+</ul>
+<h3 id="75-ai">7.5 费用标准工具（AI 唯一的数值来源）</h3>
+<ul>
+<li><strong>功能</strong>：住宿（城市三级 × 职级三档，未列城市按其他城市处理）、市内交通 80 元/天、伙食补助 100 / 120 元/天，并返回命中的条款出处。</li>
+<li><strong>没有 AI</strong>：只能给出「超标 80 元」这种数字，解释不了「超标了怎么申诉」。</li>
+<li><strong>AI 增量</strong>：模型自主决定该不该调这个工具、参数怎么填、结果怎么解读。</li>
+</ul>
+<h3 id="76-rag">7.6 制度 RAG 检索</h3>
+<ul>
+<li><strong>功能</strong>：双路召回后加权融合，返回条款原文与出处。</li>
+<li><strong>AI 增量</strong>：让「依据」可被引用、可展开，而不是让模型凭记忆背诵制度条文。</li>
+</ul>
+<h3 id="77-reviewagent-ai">7.7 ReviewAgent 终审（AI 核心）</h3>
+<ul>
+<li><strong>功能</strong>：ReAct 循环，自主决定调用费用标准工具还是制度检索，综合风控结果与制度给出结构化裁决。</li>
+<li><strong>没有 AI</strong>：只能输出「超标 80 元」这类数字，无法处理「事由与发票内容不匹配」「这笔聚餐算不算业务招待」这类语义判断。</li>
+<li><strong>AI 增量</strong>：<strong>这是规则唯一做不到的部分</strong>。在 12 条「金额完全在标准内、只能靠语义判断」的对抗样本上，纯规则引擎判对 0 条，Agent 判对 12 条。</li>
+<li><strong>界面可见</strong>：步骤序号 · 工具名 · 参数 · 返回值 · 制度原文折叠面板。</li>
+</ul>
+<h3 id="78">7.8 结构化裁决</h3>
+<ul>
+<li><strong>功能</strong>：把结论、费用类型、理由、证据链、条款引用、置信度、是否转人工固化成字段。</li>
+<li><strong>AI 增量</strong>：消除解析歧义，并让下游程序可以做<strong>逐条对账</strong>——没有结构化，防幻觉校验根本无从下手。</li>
+</ul>
+<h3 id="79-13">7.9 防幻觉校验（13 项交叉核对）</h3>
+<ul>
+<li><strong>功能</strong>：结论与工具返回值是否矛盾、引用的工具是否真的调用过、金额能否溯源、条款引用是否命中检索原文、风控高危是否被吸收……</li>
+<li><strong>AI 增量</strong>：这是「敢于让模型下结论」的前提条件。没有这一层，系统的可信度等于模型的自觉程度。</li>
+</ul>
+<h3 id="710">7.10 反思机制</h3>
+<ul>
+<li><strong>功能</strong>：工具返回与预期矛盾时，Agent 自主追加检索（例如查「超标了怎么申诉」）并修正结论。</li>
+<li><strong>AI 增量</strong>：把「AI 自主纠错」做成可控的三步机制，而不是靠提示词祈祷；<code>REFLECTION_MAX_ROUNDS = 1</code> 卡住成本，避免反复循环。</li>
+</ul>
+<h3 id="711">7.11 票夹 · 报销单 · 详情</h3>
+<ul>
+<li><strong>票夹</strong>：发票卡片网格，固定尺寸；卡片显示可辨识信息（销售方、金额、上传时间）；点击进详情；右上角上传新发票。</li>
+<li><strong>报销单</strong>：统一主表 + 分类扩展（住宿 / 餐饮 / 交通 / 材料 / 办公用品 / 其他），发票上已有的商品明细自动注入；发票号码由系统带出，用户不手填；同一次出差的多张发票用<strong>行程号</strong>分组。</li>
+<li><strong>发票详情页</strong>：完整审核明细、完整解析数据、<strong>下载发票原文件</strong>、从票夹移除；<strong>基础校验不通过时「填写报销单」按钮置灰并说明原因</strong>。</li>
+</ul>
+<p><strong>报销单详情页</strong>：审核结论、<strong>AI 审核决策过程（Agent 思考与工具调用逐步展开）</strong>、制度依据引用溯源（结论引用的条款 ↔ 检索原文并排对照）、<strong>防幻觉校验报告（逐项检查明细）</strong>、咨询 AI 审核员、人工申诉、以及编辑 / 删除 / 重新提交。</p>
+<h3 id="712">7.12 帮助中心</h3>
+<ul>
+<li><strong>功能</strong>：左侧为制度文档导航（可直接浏览知识库原文），右侧分「制度问答」与「我的发票咨询」两个页签。制度问答提供快捷问题入口，每条回答下方可展开<strong>本次引用的制度原文</strong>；发票咨询携带本张发票的识别与校验结果，并支持「结束咨询，返回上传页」。</li>
+<li><strong>AI 增量</strong>：员工追问「为什么不通过」，系统当场检索并引用条款作答，且每条回答都能翻回原文，减少财务的口头解释工作。</li>
+</ul>
+<hr />
+<h2 id="_8">八、使用说明</h2>
+<h3 id="81">8.1 用户操作流程</h3>
+<pre><code>上传发票（可多张）
+   → 逐张识别 + 12 项基础校验
+   → 查看分档结果（识别失败 / 校验不通过 / 有警告 / 完全通过）
+   → 存入票夹
+   → 填写报销单（统一主表 + 分类扩展，明细自动注入）
+   → 事由语义审核
+   → 6 项行为风控
+   → Agent 终审（调用费用标准工具 + 检索制度原文）
+   → 防幻觉校验（矛盾则改写或转人工）
+   → 查看依据 / 追问 / 申诉
+</code></pre>
+<h3 id="82">8.2 交互指南</h3>
+<table>
+<thead>
+<tr>
+<th>场景</th>
+<th>交互方式</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>上传</td>
+<td>一次可选多张；有问题的自动置顶并按四档标注</td>
+</tr>
+<tr>
+<td>看细节</td>
+<td>卡片折叠，展开后先看问题项，再看识别信息</td>
+</tr>
+<tr>
+<td>存票夹</td>
+<td>3 秒轻提示，不打断操作</td>
+</tr>
+<tr>
+<td>进填单</td>
+<td>仅基础校验通过才可点击；点击后自动先存入票夹</td>
+</tr>
+<tr>
+<td>跨页切换</td>
+<td>页面状态通过 <code>session_state</code> 保持，切走再回来内容还在</td>
+</tr>
+<tr>
+<td>看依据</td>
+<td>详情页展开制度原文与工具返回值</td>
+</tr>
+<tr>
+<td>被驳回</td>
+<td>详情页给出结论、理由、依据条款与申诉入口</td>
+</tr>
+</tbody>
+</table>
+<h3 id="83">8.3 界面与视觉规范</h3>
+<p>全站由入口文件统一注入 CSS，保证 5 个功能页「长得一样」：</p>
+<table>
+<thead>
+<tr>
+<th>规范项</th>
+<th>做法</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>侧边栏</td>
+<td>统一命名为「功能选项」等 5 项，选中态高亮，图标与主色一致</td>
+</tr>
+<tr>
+<td>页头</td>
+<td>各页标题统一由一个页头容器承载，标题字号、灰色说明文字、下方分隔线的间距全站一致</td>
+</tr>
+<tr>
+<td>主色</td>
+<td>单一蓝色主色系，深浅两档用于标题与选中态</td>
+</tr>
+<tr>
+<td>反馈</td>
+<td>操作结果用<strong>右上角轻提示</strong>（3 秒自动消失），不打断操作流</td>
+</tr>
+<tr>
+<td>状态</td>
+<td>页面状态通过 <code>session_state</code> 保持，切走再回来内容还在</td>
+</tr>
+<tr>
+<td>跳转页</td>
+<td>发票详情 / 报销单填写 / 报销单详情不在侧边栏出现，避免功能列表被跳转页污染</td>
+</tr>
+</tbody>
+</table>
+<h3 id="84">8.4 演示要点</h3>
+<p>建议按「痛点 30 秒 → 预审 60 秒 → 终审 120 秒 → 咨询 40 秒 → 价值 20 秒」组织 5 分钟视频，重点镜头是<strong>报销单详情页</strong>：结构化结论 + Agent 决策过程 + 制度原文三者同屏。</p>
+<hr />
+<h2 id="_9">九、应用前景</h2>
+<h3 id="91">9.1 落地路径</h3>
+<ol>
+<li><strong>校园试点</strong>：对接财务处报销窗口，先跑差旅住宿与办公费两类高频场景。</li>
+<li><strong>中小企业</strong>：按部门开通，制度文档由企业自行替换知识库（Markdown 即可，无需开发）。</li>
+<li><strong>ISV / 代理</strong>：作为现有 OA 或费控系统的预审插件，不替换原有审批流。</li>
+</ol>
+<h3 id="92">9.2 推广条件</h3>
+<ul>
+<li><strong>政策窗口</strong>：数电票以 XML 为法定原件，为「直解析」提供了合法性与合理性基础。</li>
+<li><strong>差异卖点</strong>：可解释预审，而不是黑盒「AI 说不行」；每一条驳回都有条款出处。</li>
+<li><strong>风险可控</strong>：模型误判由人审兜底；密钥与账号需按生产级标准管控；原件只存本单位库。</li>
+</ul>
+<h3 id="93">9.3 推广潜力</h3>
+<p>高校与中小企业的共同点是<strong>制度相对稳定、单据量集中、缺乏专职费控人员</strong>，恰好是「规则 + 少量语义判断」这套架构最经济的适用区间。制度替换成本极低（改 Markdown 即可），有利于规模化复制。</p>
+<hr />
+<h2 id="_10">十、商业模式</h2>
+<table>
+<thead>
+<tr>
+<th>客户</th>
+<th>收费方式</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>高校</td>
+<td>按学年服务费 + 实施培训费</td>
+<td>一次性对接，年度维护</td>
+</tr>
+<tr>
+<td>中小企业</td>
+<td>按座席或按单据量</td>
+<td>基础规则包免费，Agent 与知识库更新收费</td>
+</tr>
+<tr>
+<td>ISV / 代理</td>
+<td>作为 OA 插件按调用量分成</td>
+<td>不替换客户原有审批流，降低接入阻力</td>
+</tr>
+</tbody>
+</table>
+<p><strong>数据边界</strong>：不靠出售发票数据获利；原件与解析结果只存本单位数据库。</p>
+<hr />
+<h2 id="_11">十一、边界与后续规划</h2>
+<p>主动说明边界，避免演示时被问倒：</p>
+<table>
+<thead>
+<tr>
+<th>项目</th>
+<th>当前状态</th>
+<th>后续规划</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>国际发票识别</td>
+<td>未实现（素材已备）</td>
+<td>增加多语种模板与币种换算</td>
+</tr>
+<tr>
+<td>图片发票</td>
+<td>已接入 OCR，不承诺 100% 识别率</td>
+<td>增加识别置信度提示与人审入口</td>
+</tr>
+<tr>
+<td>制度知识库</td>
+<td>覆盖住宿、招待、会议、材料等主要场景</td>
+<td>扩充行业模板，支持企业一键导入</td>
+</tr>
+<tr>
+<td>评测样本量</td>
+<td>24 条，结论为趋势性</td>
+<td>扩充至 100+ 条并引入真实历史单据</td>
+</tr>
+<tr>
+<td>登录与权限</td>
+<td>演示用轻量身份切换</td>
+<td>接入正式 IAM 与分权管理</td>
+</tr>
+</tbody>
+</table>
+<p><strong>已知的两类模型侧错误也如实记录</strong>：金额恰好等于标准时的边界判断、以及制度未规定金额标准时的处理倾向。这两条暴露的是制度文本与提示词的缺口，已列入迭代清单。</p></body></html>

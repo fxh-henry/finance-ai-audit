@@ -1,0 +1,161 @@
+{
+  "run_count": 12,
+  "labeled_count": 12,
+  "label_distribution": {
+    "通过": 5,
+    "不通过": 7
+  },
+  "groups": {
+    "C": {
+      "desc": "纯规则",
+      "correct": 7,
+      "total": 12,
+      "accuracy": 0.5833,
+      "unresolved": 0,
+      "human": 0,
+      "human_rate": 0.0,
+      "decided": 12,
+      "decided_accuracy": 0.5833,
+      "adversarial_correct": 0,
+      "adversarial_total": 5,
+      "adversarial_accuracy": 0.0
+    },
+    "D": {
+      "desc": "自由文本（旧解析）",
+      "correct": 11,
+      "total": 12,
+      "accuracy": 0.9167,
+      "unresolved": 0,
+      "human": 0,
+      "human_rate": 0.0,
+      "decided": 12,
+      "decided_accuracy": 0.9167,
+      "adversarial_correct": 5,
+      "adversarial_total": 5,
+      "adversarial_accuracy": 1.0
+    },
+    "B": {
+      "desc": "结构化无校验",
+      "correct": 11,
+      "total": 12,
+      "accuracy": 0.9167,
+      "unresolved": 0,
+      "human": 0,
+      "human_rate": 0.0,
+      "decided": 12,
+      "decided_accuracy": 0.9167,
+      "adversarial_correct": 5,
+      "adversarial_total": 5,
+      "adversarial_accuracy": 1.0
+    },
+    "A": {
+      "desc": "结构化+防幻觉校验",
+      "correct": 11,
+      "total": 12,
+      "accuracy": 0.9167,
+      "unresolved": 0,
+      "human": 0,
+      "human_rate": 0.0,
+      "decided": 12,
+      "decided_accuracy": 0.9167,
+      "adversarial_correct": 5,
+      "adversarial_total": 5,
+      "adversarial_accuracy": 1.0
+    },
+    "E": {
+      "desc": "A+反思（交付态）",
+      "correct": 11,
+      "total": 12,
+      "accuracy": 0.9167,
+      "unresolved": 0,
+      "human": 0,
+      "human_rate": 0.0,
+      "decided": 12,
+      "decided_accuracy": 0.9167,
+      "adversarial_correct": 5,
+      "adversarial_total": 5,
+      "adversarial_accuracy": 1.0
+    }
+  },
+  "deltas_pp": {
+    "B_minus_D": 0.0,
+    "A_minus_B": 0.0,
+    "E_minus_A": 0.0
+  },
+  "reflection": {
+    "triggered": 4,
+    "changed": 0,
+    "fixed": 0,
+    "broke": 0
+  },
+  "cost": {
+    "elapsed_sec_total": 813.7,
+    "elapsed_sec_avg": 67.8,
+    "measured_cases": 12
+  },
+  "failures": [
+    {
+      "case_id": "case_A04",
+      "group": "D",
+      "pred": "不通过",
+      "label": "通过",
+      "note": "上海住宿400元×1晚，报销人张三（普通员工，标准400元/天），刚好踩线"
+    },
+    {
+      "case_id": "case_A04",
+      "group": "B",
+      "pred": "不通过",
+      "label": "通过",
+      "note": "上海住宿400元×1晚，报销人张三（普通员工，标准400元/天），刚好踩线"
+    },
+    {
+      "case_id": "case_A04",
+      "group": "A",
+      "pred": "不通过",
+      "label": "通过",
+      "note": "上海住宿400元×1晚，报销人张三（普通员工，标准400元/天），刚好踩线"
+    },
+    {
+      "case_id": "case_A04",
+      "group": "E",
+      "pred": "不通过",
+      "label": "通过",
+      "note": "上海住宿400元×1晚，报销人张三（普通员工，标准400元/天），刚好踩线"
+    },
+    {
+      "case_id": "case_A08",
+      "group": "C",
+      "pred": "不通过",
+      "label": "通过",
+      "note": "上海住宿900元×2晚（折合450元/晚），报销人李四（部门经理，一线标准500元/天）。注意票面总额900元大于500元"
+    },
+    {
+      "case_id": "case_B01",
+      "group": "C",
+      "pred": "通过",
+      "label": "不通过",
+      "note": "票面是金属材料350元，报销单却按「住宿费/上海/1晚」填报——费用类型与票面不符，但金额350元落在上海部门经理500元标准内，只看金额判不出来"
+    },
+    {
+      "case_id": "case_B02",
+      "group": "C",
+      "pred": "通过",
+      "label": "不通过",
+      "note": "票面是餐饮服务60元，报销单却按「交通费」填报。60元在80元/天的市内交通标准内，纯看标准一定放过"
+    },
+    {
+      "case_id": "case_B03",
+      "group": "C",
+      "pred": "通过",
+      "label": "不通过",
+      "note": "票面是餐饮服务300元，报销单按「住宿费/南京/1晚」填报。300元落在南京部门经理400元标准内，规则会放过"
+    },
+    {
+      "case_id": "case_B04",
+      "group": "C",
+      "pred": "通过",
+      "label": "不通过",
+      "note": "票面是公路旅客运输380元，报销单按「住宿费/上海/1晚」填报。380元落在上海普通员工400元标准内，规则会放过"
+    }
+  ]
+}

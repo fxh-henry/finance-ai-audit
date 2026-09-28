@@ -24,14 +24,14 @@ def _get_llm():
             api_key=LLM_API_KEY,
             base_url=LLM_BASE_URL,
             model=LLM_MODEL,
-            temperature=0.1,  # 低温度，保证判断稳定
-            streaming=False,
+            temperature=0.1,
+            streaming=True,
         )
         success("[事由语义审核] LLM初始化成功")
     return _llm
 
 
-def check_reason_semantic(invoice_data, reason, expense_type=None):
+def check_reason_semantic(invoice_data, reason, expense_type=None, on_token=None):
     """
     报销事由语义审核：判断报销事由与发票内容、费用类型是否匹配
 
@@ -99,14 +99,25 @@ def check_reason_semantic(invoice_data, reason, expense_type=None):
 
     try:
         info(f"[事由语义审核] 开始审核：事由='{reason}'")
-        result_text = chain.invoke({
-            "invoice_type": invoice_type,
-            "seller": seller,
-            "item_name": item_name,
-            "total_amount": total_amount,
-            "expense_type": expense_type or "未选择",
-            "reason": reason,
-        })
+        from langchain_core.callbacks import BaseCallbackHandler
+
+        class _StreamCallback(BaseCallbackHandler):
+            def on_llm_new_token(self, token, **kwargs):
+                if on_token:
+                    try: on_token(token)
+                    except: pass
+
+        result_text = chain.invoke(
+            {
+                "invoice_type": invoice_type,
+                "seller": seller,
+                "item_name": item_name,
+                "total_amount": total_amount,
+                "expense_type": expense_type or "未选择",
+                "reason": reason,
+            },
+            config={"callbacks": [_StreamCallback()]},
+        )
         success("[事由语义审核] 审核完成")
 
         # 解析LLM输出

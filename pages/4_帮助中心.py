@@ -25,12 +25,27 @@ def list_knowledge_docs():
     """读取知识库目录下所有.md文件，返回 [(文件名, 内容), ...]"""
     docs = []
     if KNOWLEDGE_BASE_DIR.exists():
-        for md_file in sorted(KNOWLEDGE_BASE_DIR.glob("*.md")):
+        for md_file in sorted(KNOWLEDGE_BASE_DIR.rglob("*.md")):
             if md_file.name == "README.md":
                 continue  # 跳过README
             content = md_file.read_text(encoding="utf-8")
             docs.append((md_file.stem, content))
     return docs
+
+
+def _render_doc_content(content):
+    """把markdown文档内容转成小标题样式"""
+    out = []
+    for line in content.split(chr(10)):
+        if line.startswith("# "):
+            out.append("**" + line[2:].strip() + "**")
+        elif line.startswith("## "):
+            out.append("**" + line[3:].strip() + "**")
+        elif line.startswith("### "):
+            out.append("*" + line[4:].strip() + "*")
+        else:
+            out.append(line)
+    return chr(10).join(out)
 
 
 def render_doc_navigator(docs, key_prefix):
@@ -181,39 +196,42 @@ def render_folder_consult():
             basic_check_text=stored_audit.get("detail_text"),  # 把当初存库的校验明细也带上
         )
 
-    left_col, right_col = st.columns([1, 3])  # 左文档导航、右对话
+    if knowledge_docs:
+        doc_names = [n for n, _ in knowledge_docs]
+        with st.popover("📄 查看制度文档", use_container_width=False):
+            st.markdown("**选择文档查看原文**")
+            sel = st.radio("文档", doc_names, key="tab2_doc_radio", label_visibility="collapsed")
+            if sel:
+                for name, content in knowledge_docs:
+                    if name == sel:
+                        st.markdown("---")
+                        st.markdown(_render_doc_content(content[:3000]) + ("..." if len(content) > 3000 else ""))
+                        break
+    st.divider()
+    for msg in st.session_state.invoice_chat_history:  # 渲染对话历史
+        with st.chat_message(msg["role"]):  # 气泡
+            st.markdown(msg["content"])  # 内容
 
-    with left_col:  # 左侧
-        doc_content = render_doc_navigator(knowledge_docs, "tab2")  # 渲染制度文档导航
-        if doc_content:  # 选中了文档
-            with st.expander("查看文档原文", expanded=False):  # 折叠面板
-                st.markdown(doc_content)  # 显示文档原文
+    if not st.session_state.invoice_chat_history:  # 还没有对话
+        st.info("已加载当前发票信息，您可以针对这张发票提问，例如：这张发票能报销吗？费用类型选什么？")  # 引导提示
 
-    with right_col:  # 右侧
-        for msg in st.session_state.invoice_chat_history:  # 渲染对话历史
-            with st.chat_message(msg["role"]):  # 气泡
-                st.markdown(msg["content"])  # 内容
+    user_input = st.chat_input(  # 提问输入框
+        "针对这张发票提问，例如：这张发票能报销吗？费用类型应该选什么？",  # 占位提示
+        key="tab2_chat"  # 控件 key
+    )
 
-        if not st.session_state.invoice_chat_history:  # 还没有对话
-            st.info("已加载当前发票信息，您可以针对这张发票提问，例如：这张发票能报销吗？费用类型选什么？")  # 引导提示
+    if user_input:  # 有提问
+        with st.chat_message("user"):  # 用户气泡
+            st.markdown(user_input)  # 显示问题
+        st.session_state.invoice_chat_history.append({"role": "user", "content": user_input})  # 记进历史
 
-        user_input = st.chat_input(  # 提问输入框
-            "针对这张发票提问，例如：这张发票能报销吗？费用类型应该选什么？",  # 占位提示
-            key="tab2_chat"  # 控件 key
-        )
+        with st.spinner("AI正在结合发票信息和报销制度分析..."):  # 等待提示
+            answer = st.session_state.invoice_review_agent.chat(user_input)  # 让 Agent 回答
 
-        if user_input:  # 有提问
-            with st.chat_message("user"):  # 用户气泡
-                st.markdown(user_input)  # 显示问题
-            st.session_state.invoice_chat_history.append({"role": "user", "content": user_input})  # 记进历史
-
-            with st.spinner("AI正在结合发票信息和报销制度分析..."):  # 等待提示
-                answer = st.session_state.invoice_review_agent.chat(user_input)  # 让 Agent 回答
-
-            with st.chat_message("assistant"):  # AI 气泡
-                st.markdown(answer)  # 显示回答
-            st.session_state.invoice_chat_history.append({"role": "assistant", "content": answer})  # 记进历史
-            st.rerun()  # 立刻重跑
+        with st.chat_message("assistant"):  # AI 气泡
+            st.markdown(answer)  # 显示回答
+        st.session_state.invoice_chat_history.append({"role": "assistant", "content": answer})  # 记进历史
+        st.rerun()  # 立刻重跑
 
 
 
@@ -260,53 +278,67 @@ knowledge_docs = list_knowledge_docs()
 # Tab1：制度问答
 # ============================================================================
 with tab1:
-    left_col, right_col = st.columns([1, 3])
+    # 顶部：一个按钮弹出文档列表，不占左侧窄列
+    if knowledge_docs:
+        doc_names = [n for n, _ in knowledge_docs]
+        with st.popover("📄 查看制度文档", use_container_width=False):
+            st.markdown("**选择文档查看原文**")
+            sel = st.radio("文档", doc_names, key="tab1_doc_radio", label_visibility="collapsed")
+            if sel:
+                for name, content in knowledge_docs:
+                    if name == sel:
+                        st.markdown("---")
+                        st.markdown(_render_doc_content(content[:3000]) + ("..." if len(content) > 3000 else ""))
+                        break
+    st.divider()
+    # 常见问题（只在没有对话历史时显示）
+    if not st.session_state.help_chat_history:
+        st.markdown("**常见问题**")
+        q1, q2, q3, q4 = st.columns(4)
+        quick_questions = [
+            "住宿费报销标准是多少",
+            "业务招待费怎么报销",
+            "差旅费报销需要哪些附件",
+            "发票重复报销怎么处理"
+        ]
+        for i, col in enumerate([q1, q2, q3, q4]):
+            with col:
+                if st.button(quick_questions[i], use_container_width=True, key=f"tab1_q{i}"):
+                    st.session_state.quick_q_tab1 = quick_questions[i]
+        st.divider()
 
-    with left_col:
-        doc_content = render_doc_navigator(knowledge_docs, "tab1")
-        if doc_content:
-            with st.expander("查看文档原文", expanded=False):
-                st.markdown(doc_content)
+    # 对话历史
+    for msg in st.session_state.help_chat_history:
+        with st.chat_message(msg["role"]):
+            st.markdown(msg["content"])
+            if msg["role"] == "assistant" and msg.get("sources"):
+                with st.expander("📎 本次回答引用的制度原文", expanded=False):
+                    for i, src in enumerate(msg["sources"], 1):
+                        st.caption(f"资料{i}（相关度 {src['score']:.2f}）")
+                        st.markdown(_render_doc_content(src["content"]))
 
-    with right_col:
-        # 常见问题（只在没有对话历史时显示）
-        if not st.session_state.help_chat_history:
-            st.markdown("**常见问题**")
-            q1, q2, q3, q4 = st.columns(4)
-            quick_questions = [
-                "住宿费报销标准是多少",
-                "业务招待费怎么报销",
-                "差旅费报销需要哪些附件",
-                "发票重复报销怎么处理"
-            ]
-            for i, col in enumerate([q1, q2, q3, q4]):
-                with col:
-                    if st.button(quick_questions[i], use_container_width=True, key=f"tab1_q{i}"):
-                        st.session_state.quick_q_tab1 = quick_questions[i]
-            st.divider()
+    # 用户输入
+    user_input = st.chat_input("输入您的问题，例如：住宿费超标了怎么办？", key="tab1_chat")
+    if "quick_q_tab1" in st.session_state:
+        user_input = st.session_state.pop("quick_q_tab1")
 
-        # 对话历史
-        for msg in st.session_state.help_chat_history:
-            with st.chat_message(msg["role"]):
-                st.markdown(msg["content"])
+    if user_input:
+        with st.chat_message("user"):
+            st.markdown(user_input)
+        st.session_state.help_chat_history.append({"role": "user", "content": user_input})
 
-        # 用户输入
-        user_input = st.chat_input("输入您的问题，例如：住宿费超标了怎么办？", key="tab1_chat")
-        if "quick_q_tab1" in st.session_state:
-            user_input = st.session_state.pop("quick_q_tab1")
+        with st.spinner("正在检索知识库并生成回答..."):
+            answer, sources = st.session_state.help_rag_llm.ask(user_input)
 
-        if user_input:
-            with st.chat_message("user"):
-                st.markdown(user_input)
-            st.session_state.help_chat_history.append({"role": "user", "content": user_input})
-
-            with st.spinner("正在检索知识库并生成回答..."):
-                answer = st.session_state.help_rag_llm.ask(user_input)
-
-            with st.chat_message("assistant"):
-                st.markdown(answer)
-            st.session_state.help_chat_history.append({"role": "assistant", "content": answer})
-            st.rerun()
+        with st.chat_message("assistant"):
+            st.markdown(answer)
+            if sources:
+                with st.expander("📎 本次回答引用的制度原文", expanded=False):
+                    for i, src in enumerate(sources, 1):
+                        st.caption(f"资料{i}（相关度 {src['score']:.2f}）")
+                        st.markdown(_render_doc_content(src["content"]))
+        st.session_state.help_chat_history.append({"role": "assistant", "content": answer, "sources": sources})
+        st.rerun()
 
 # ============================================================================
 # Tab2：我的发票咨询（两个入口：从票夹选发票 / 从「发票上传」页带着材料过来）
