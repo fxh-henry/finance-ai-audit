@@ -35,3 +35,6 @@ rag/cache/
 
 # 模型缓存（只提交实际模型文件，不提交下载缓存）
 models/**/.cache/
+"_chrome_profile/" 
+"__pycache__/" 
+"*.pyc" 

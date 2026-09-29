@@ -250,7 +250,10 @@ def run_agent_stream(agent, messages, recursion_limit=10, on_event=None):
                     for msg in (node_output or {}).get("messages", []) or []:
                         tool_name = getattr(msg, "name", "") or "未知工具"  # 工具名
                         result = as_dict(msg.content)  # 把返回值统一转成 dict（供结构化抽取/校验读字段）
-                        step = trace.add(STEP_TOOL_RESULT, tool_name=tool_name, tool_result=result)  # 记一步结果
+                        # 工具执行失败时，LangChain 会把错误文本塞进 ToolMessage.content，
+                        # 经 as_dict() 变成 {"_raw": ...}；据此标记 ok=False，让详情页能把失败步骤标红
+                        tool_ok = not ("_raw" in result or "error" in result)  # 判定这一步是否成功
+                        step = trace.add(STEP_TOOL_RESULT, tool_name=tool_name, tool_result=result, ok=tool_ok)  # 记一步结果
                         success(f"【Agent第{step.step}步】工具[{tool_name}]执行完成")  # 打日志
                         info(f"  返回结果: {str(result)[:150]}...")  # 打日志（只打前150字）
                         _emit(on_event, {"type": STEP_TOOL_RESULT, "step": step.step,

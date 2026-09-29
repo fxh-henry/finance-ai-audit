@@ -20,6 +20,36 @@ update_expense_form_audit = _db.update_expense_form_audit  # 回写终审结果
 
 st.set_page_config(page_title="报销单详情", layout="wide")  # 页面配置：标签标题 + 宽屏布局
 
+# ---------------------------------------------------------------------------
+# 本页灰线间距：Streamlit 默认 hr 上下各约 1rem，叠加容器 gap 后显得很松
+# 这里只收紧正文里的分隔线；页头那条灰线仍由 app.py 的 ②③ 两个变量控制
+# ---------------------------------------------------------------------------
+st.markdown(
+    """
+<style>
+    /* 正文分隔线：上下各留 3px（默认约 1rem），线条样式与页头保持一致 */
+    [data-testid="stMainBlockContainer"] hr {
+        margin: 3px 0 !important;  /* 上下间距：想更松就调大这个值 */
+        height: 1px !important;  /* 线条粗细 */
+        border: none !important;  /* 去掉浏览器自带边框 */
+        background-color: #E2E8F0 !important;  /* 浅灰线颜色 */
+    }
+
+    /* 页头灰线：沿用 app.py 里的 --ph-rule-gap / --ph-body-gap，不被上面的收紧影响 */
+    .st-key-pagehead hr {
+        margin: var(--ph-rule-gap) 0 var(--ph-body-gap) 0 !important;
+    }
+
+    /* 轨迹容器：节点之间的基础间距同步收紧，灰线才不显得孤立 */
+    .st-key-audit_trace,
+    .st-key-audit_trace [data-testid="stVerticalBlock"] {
+        gap: 0.35rem !important;  /* 元素间距：默认 0.85rem */
+    }
+</style>
+""",
+    unsafe_allow_html=True,  # 允许渲染上面的 CSS
+)
+
 
 def _fmt_amount(value):  # 工具函数：把金额格式化成 ¥1,234.00
     if value is None or value == "":  # 金额为空
@@ -28,6 +58,39 @@ def _fmt_amount(value):  # 工具函数：把金额格式化成 ¥1,234.00
         return f"¥{float(value):,.2f}"  # 千分位 + 两位小数
     except (TypeError, ValueError):  # 不是数字时原样显示
         return str(value)
+
+
+def _render_trace_text(text, limit=800, label="展开完整内容"):
+    """渲染轨迹里的文本节点（思考 / 最终回答）。
+
+    原实现一律截断到 200 字并丢弃剩余内容，Agent 的完整思考与最终回答
+    在页面上永远看不全。这里默认直出全文，只有超过 limit 的极长文本才折叠。
+    """
+    clean = (text or "").lstrip("#").strip()  # 去掉模型习惯加的开头井号，再去首尾空白
+    if not clean:  # 本步没有文本内容
+        st.caption("（本步无文本内容）")  # 给一句占位，避免出现空白块
+        return  # 直接结束
+    if len(clean) <= limit:  # 正常长度：直接显示全文
+        st.markdown(clean)  # Markdown 渲染，保留加粗与列表
+    else:  # 极长文本：先显示摘要，再给可展开的全文
+        st.markdown(clean[:limit] + "…")  # 截断显示，省略号提示仍有内容
+        with st.expander(f"{label}（共 {len(clean)} 字）"):  # 嵌套折叠：点击才展开
+            st.markdown(clean)  # 完整内容
+
+
+def _render_trace_json(payload, limit=1200, label="展开完整返回"):
+    """渲染工具返回值：短则直出，长则先截断再提供完整 JSON。
+
+    原实现截断到 500 字符且不可展开，工具返回的关键字段（超标金额、
+    命中条款等）一旦排在后半段就被丢弃。这里默认直出全文。
+    """
+    dumped = json.dumps(payload, ensure_ascii=False, indent=2)  # 格式化 JSON，保留中文
+    if len(dumped) <= limit:  # 正常长度：直接显示
+        st.code(dumped, language="json")  # 代码块渲染，便于阅读
+    else:  # 极长返回（例如 RAG 命中的制度原文）：截断 + 展开
+        st.code(dumped[:limit] + "\n…", language="json")  # 截断显示
+        with st.expander(f"{label}（共 {len(dumped)} 字符）"):  # 可展开完整内容
+            st.code(dumped, language="json")  # 完整 JSON
 
 
 @st.dialog("人工申诉", width=400)  # 申诉弹窗：窄弹窗与报销单填写页的语义审核弹窗保持一致
@@ -247,30 +310,35 @@ trace_steps = trace_data.get("steps") or []
 if trace_steps:
     with st.expander("AI审核决策过程（点击展开查看Agent思考与工具调用）", expanded=False):
         st.caption("以下为AI审核员在本次审核中的完整推理轨迹：")
-        for step in trace_steps:
-            step_kind = step.get("kind", "")
-            step_text = step.get("text", "")
-            tool_name = step.get("tool_name", "")
-            tool_args = step.get("tool_args", {})
-            tool_result = step.get("tool_result", {})
+        # 逐节点渲染：带步骤编号，失败的步骤标红，内容默认显示全文
+        with st.container(key="audit_trace"):  # 轨迹容器：灰线间距由本页样式收紧
+            for step in trace_steps:  # 按记录顺序遍历每个节点
+                step_no = step.get("step") or 0  # 步骤编号（trace.py 中从 1 开始递增）
+                step_kind = step.get("kind", "")  # 节点类型：thinking / tool_call / tool_result / answer / structured
+                step_text = step.get("text", "")  # 文本内容（思考、最终回答、结构化结论）
+                tool_name = step.get("tool_name", "")  # 工具名（仅调用与返回节点有值）
+                tool_args = step.get("tool_args", {})  # 工具入参
+                tool_result = step.get("tool_result", {})  # 工具返回值
+                step_ok = step.get("ok", True)  # 这一步是否执行成功（原实现忽略了这个字段）
 
-            if step_kind == "thinking":
-                clean = step_text.lstrip("#").strip()
-                display = clean[:200] + ("..." if len(clean) > 200 else "")
-                st.markdown(f"💭 **思考**：{display}")
-            elif step_kind == "tool_call":
-                st.markdown(f"🔧 **调用工具**：`{tool_name}`")
-                st.code(json.dumps(tool_args, ensure_ascii=False, indent=2), language="json")
-            elif step_kind == "tool_result":
-                st.markdown(f"📦 **工具返回**：`{tool_name}`")
-                st.code(json.dumps(tool_result, ensure_ascii=False, indent=2)[:500], language="json")
-            elif step_kind == "answer":
-                clean = step_text.lstrip("#").strip()
-                display = clean[:200] + ("..." if len(clean) > 200 else "")
-                st.markdown(f"✅ **最终回答**：{display}")
-            elif step_kind == "structured":
-                st.markdown(f"📋 **结构化裁决**：结论 = {step_text}")
-            st.divider()
+                if not step_ok:  # 失败节点：工具报错此前在界面上完全看不出来
+                    st.error(f"第 {step_no} 步执行失败" + (f"（工具：{tool_name}）" if tool_name else ""))  # 红色告警条
+
+                if step_kind == "thinking":  # 思考节点
+                    st.markdown(f"💭 **第 {step_no} 步 · 思考**")  # 步骤标题
+                    _render_trace_text(step_text)  # 正文（默认全文显示）
+                elif step_kind == "tool_call":  # 调用工具节点
+                    st.markdown(f"🔧 **第 {step_no} 步 · 调用工具**：`{tool_name}`")  # 步骤标题 + 工具名
+                    st.code(json.dumps(tool_args, ensure_ascii=False, indent=2), language="json")  # 入参 JSON
+                elif step_kind == "tool_result":  # 工具返回节点
+                    st.markdown(f"📦 **第 {step_no} 步 · 工具返回**：`{tool_name}`")  # 步骤标题 + 工具名
+                    _render_trace_json(tool_result)  # 返回值（默认全文显示）
+                elif step_kind == "answer":  # 最终回答节点
+                    st.markdown(f"✅ **第 {step_no} 步 · 最终回答**")  # 步骤标题
+                    _render_trace_text(step_text)  # 正文（默认全文显示）
+                elif step_kind == "structured":  # 结构化裁决节点
+                    st.markdown(f"📋 **第 {step_no} 步 · 结构化裁决**：结论 = {step_text}")  # 一句话结论
+                st.divider()  # 节点之间的分隔线
 
 # ---------------------------------------------------------------------------
 # 制度依据（引用溯源高亮）：结论引用的条款 ↔ RAG检索到的原文

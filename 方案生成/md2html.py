@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """把应用方案 Markdown 转成可打印的 HTML。封面文字从「封面信息.txt」读取，改完无需改代码。"""
-import sys, io, os
+import sys, io, os, re
 import markdown
 
 md_path  = sys.argv[1]
@@ -25,10 +25,10 @@ for ln in lines:
         if ln.startswith("# "):
             skipped = True
             continue
-        if ln.startswith(">"):
-            continue
         if ln.strip() == "" and not body:
             continue
+    if ln.startswith(">") and not body:  # 正文开始前的引用行（副标题）不渲染成引用块
+        continue
     body.append(ln)
 body_md = "[TOC]\n\n" + "\n".join(body).lstrip("\n")
 
@@ -38,8 +38,22 @@ html_body = markdown.markdown(
     extension_configs={"toc": {"title": "目录", "toc_depth": "1-3"}},
 )
 
+# 中间 HTML 会被写到系统临时目录，相对路径会解析到临时目录导致图片全部丢失，
+# 因此这里统一把相对路径改写成基于 md 文件所在目录的绝对 file:/// 路径。
+_md_dir = os.path.dirname(os.path.abspath(md_path)).replace("\\", "/")
+
+
+def _to_abs_img(match):  # 逐张图处理
+    src = match.group("src")  # 原始路径
+    if re.match(r"(?i)^(https?:|data:|file:)", src):  # 网络图 / 内嵌图 / 已是绝对路径
+        return match.group(0)  # 原样保留
+    return '<img %ssrc="file:///%s/%s"' % (match.group("pre"), _md_dir, src.lstrip("/"))
+
+
+html_body = re.sub(r'<img (?P<pre>[^>]*?)src="(?P<src>[^"]+)"', _to_abs_img, html_body)
+
 CSS = """
-@page { size: A4; margin: 16mm 14mm 18mm 14mm; }
+@page { size: A4; margin: 13mm 14mm 15mm 14mm; }
 * { box-sizing: border-box; }
 body { font-family: "Microsoft YaHei UI","Microsoft YaHei","PingFang SC","SimSun",sans-serif;
   font-size: 10pt; line-height: 1.75; color: #1a1a1a; margin: 0;
@@ -55,30 +69,37 @@ body { font-family: "Microsoft YaHei UI","Microsoft YaHei","PingFang SC","SimSun
 h1 { font-size: 17pt; color: #14315c; border-bottom: 2.5px solid #14315c;
      padding-bottom: 3mm; margin: 0 0 6mm 0; page-break-before: always; page-break-after: avoid; }
 h2 { font-size: 13.5pt; color: #1d4b8f; border-bottom: 1px solid #c9d7ea;
-     padding-bottom: 1.5mm; margin: 8mm 0 3.5mm 0; page-break-after: avoid; }
-h3 { font-size: 11.5pt; color: #24507f; margin: 6mm 0 2.5mm 0; page-break-after: avoid; }
+     padding-bottom: 1.4mm; margin: 4mm 0 2.8mm 0; page-break-after: avoid; }
+h3 { font-size: 11.5pt; color: #24507f; margin: 4mm 0 2mm 0; page-break-after: avoid; }
 p { margin: 2.5mm 0; }
 ul, ol { margin: 2.5mm 0; padding-left: 7mm; }
 li { margin: 1.2mm 0; }
 table { border-collapse: collapse; width: 100%; margin: 3.5mm 0; font-size: 8.8pt; page-break-inside: auto; }
 th { background: #eaf1fa; color: #14315c; font-weight: 600; text-align: left;
-     border: 1px solid #c3d3e8; padding: 1.8mm 2.2mm; }
-td { border: 1px solid #d5dee9; padding: 1.8mm 2.2mm; vertical-align: top; }
+     border: 1px solid #c3d3e8; padding: 1.5mm 1.9mm; }
+td { border: 1px solid #d5dee9; padding: 1.5mm 1.9mm; vertical-align: top; }
 tbody tr:nth-child(even) { background: #f8fafd; }
 tr { page-break-inside: avoid; }
 code { font-family: Consolas,"Courier New",monospace; font-size: 9pt;
        background: #f2f5f9; padding: 0.3mm 1mm; border-radius: 2px; }
 pre { background: #f6f8fb; border: 1px solid #dde5ef; border-left: 3px solid #7aa2d4;
       padding: 3mm 3.5mm; margin: 3.5mm 0; page-break-inside: avoid; }
-pre code { background: none; padding: 0; font-size: 8.6pt; line-height: 1.55; }
+pre code { background: none; padding: 0; font-size: 8.0pt; line-height: 1.45; }
 blockquote { margin: 3.5mm 0; padding: 2.5mm 4mm; background: #f7f9fc;
              border-left: 3px solid #7aa2d4; color: #33475e; }
 blockquote p { margin: 1.2mm 0; }
 hr { border: none; border-top: 1px solid #d5dee9; margin: 6mm 0; }
 a { color: #1d4b8f; text-decoration: none; }
+img { max-width: 85%; height: auto; page-break-inside: avoid;
+      display: block; margin: 3mm auto 1mm auto; }
+p > em:only-child { display: block; text-align: center; color: #64748b;
+      font-size: 9pt; font-style: normal; margin: 0.5mm 0 3mm 0; }
+h4 { font-size: 10.5pt; color: #24507f; margin: 4.5mm 0 2mm 0; page-break-after: avoid; }
 .toc { background: #f8fafd; border: 1px solid #dde5ef; padding: 4mm 6mm; margin-bottom: 6mm; }
 .toc ul { list-style: none; padding-left: 4mm; }
 .toc > ul { padding-left: 0; }
+.toc > ul { column-count: 2; column-gap: 8mm; }  /* 目录双栏：省版面 */
+.toc li { break-inside: avoid; }  /* 不让同一章的条目被拆到两栏 */
 .toc li { margin: 1mm 0; font-size: 9.5pt; }
 strong { color: #0f2a4d; }
 """
