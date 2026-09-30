@@ -51,8 +51,8 @@ DB_PATH = "database/finance_audit.db"
 
 
 # ===== 公司信息（用于发票抬头/税号校验） =====
-COMPANY_NAME ="苏州城市学院"
-COMPANY_TAX_ID ="12320500MB1F99368P"
+COMPANY_NAME ="泗阳县成达制盖有限公司"
+COMPANY_TAX_ID ="91321323796144439H"
 # COMPANY_NAME = "泗阳县成达制盖有限公司"
 # COMPANY_TAX_ID = "91321323796144439H"
 

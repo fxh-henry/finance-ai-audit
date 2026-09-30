@@ -55,7 +55,7 @@ html_body = re.sub(r'<img (?P<pre>[^>]*?)src="(?P<src>[^"]+)"', _to_abs_img, htm
 CSS = """
 @page { size: A4; margin: 13mm 14mm 15mm 14mm; }
 * { box-sizing: border-box; }
-body { font-family: "Microsoft YaHei UI","Microsoft YaHei","PingFang SC","SimSun",sans-serif;
+body { font-family: "SimSun","宋体","Microsoft YaHei UI","Microsoft YaHei",sans-serif;
   font-size: 10pt; line-height: 1.75; color: #1a1a1a; margin: 0;
   -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 .cover { height: 245mm; display: flex; flex-direction: column; justify-content: center;
@@ -64,14 +64,17 @@ body { font-family: "Microsoft YaHei UI","Microsoft YaHei","PingFang SC","SimSun
 .cover h1 { font-size: 27pt; color: #14315c; border: none; margin: 0 0 6mm 0; padding: 0;
             line-height: 1.4; page-break-before: avoid; }
 .cover .sub { font-size: 13pt; color: #4a6fa5; margin-bottom: 16mm; }
-.cover .meta { font-size: 11pt; color: #333; line-height: 2.2; }
+.cover .meta { font-size: 11pt; color: #333; line-height: 2.2;
+              text-align: left; }  /* 封面信息块左对齐，不跟随封面整体居中 */
 .cover .meta b { color: #14315c; }
+h1, h2, h3, h4, .cover h1, .cover .badge, .cover .sub, .cover .meta {
+     font-family: "Microsoft YaHei UI","Microsoft YaHei","PingFang SC",sans-serif; }
 h1 { font-size: 17pt; color: #14315c; border-bottom: 2.5px solid #14315c;
      padding-bottom: 3mm; margin: 0 0 6mm 0; page-break-before: always; page-break-after: avoid; }
 h2 { font-size: 13.5pt; color: #1d4b8f; border-bottom: 1px solid #c9d7ea;
      padding-bottom: 1.4mm; margin: 4mm 0 2.8mm 0; page-break-after: avoid; }
 h3 { font-size: 11.5pt; color: #24507f; margin: 4mm 0 2mm 0; page-break-after: avoid; }
-p { margin: 2.5mm 0; }
+p { margin: 2.5mm 0; text-indent: 2em; }
 ul, ol { margin: 2.5mm 0; padding-left: 7mm; }
 li { margin: 1.2mm 0; }
 table { border-collapse: collapse; width: 100%; margin: 3.5mm 0; font-size: 8.8pt; page-break-inside: auto; }
@@ -92,7 +95,7 @@ hr { border: none; border-top: 1px solid #d5dee9; margin: 6mm 0; }
 a { color: #1d4b8f; text-decoration: none; }
 img { max-width: 85%; height: auto; page-break-inside: avoid;
       display: block; margin: 3mm auto 1mm auto; }
-p > em:only-child { display: block; text-align: center; color: #64748b;
+p > em:only-child { display: block; text-indent: 0; text-align: center; color: #64748b;
       font-size: 9pt; font-style: normal; margin: 0.5mm 0 3mm 0; }
 h4 { font-size: 10.5pt; color: #24507f; margin: 4.5mm 0 2mm 0; page-break-after: avoid; }
 .toc { background: #f8fafd; border: 1px solid #dde5ef; padding: 4mm 6mm; margin-bottom: 6mm; }
@@ -101,6 +104,8 @@ h4 { font-size: 10.5pt; color: #24507f; margin: 4.5mm 0 2mm 0; page-break-after:
 .toc > ul { column-count: 2; column-gap: 8mm; }  /* 目录双栏：省版面 */
 .toc li { break-inside: avoid; }  /* 不让同一章的条目被拆到两栏 */
 .toc li { margin: 1mm 0; font-size: 9.5pt; }
+.toc, .toc ul, .toc li, .toc a, .toc .toctitle {
+     font-family: "SimHei","黑体","Microsoft YaHei UI",sans-serif; }  /* 目录用黑体 */
 strong { color: #0f2a4d; }
 """
 

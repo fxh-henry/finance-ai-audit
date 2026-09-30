@@ -29,6 +29,38 @@ TIER_ICON = {0: "⛔", 1: "❌", 2: "⚠️", 3: "✅"}  # 每档的图标，拼
 TIER_TEXT = {0: "识别失败", 1: "校验不通过", 2: "通过（有警告）", 3: "通过"}  # 每档的文字说明
 
 
+# ============================================================================
+# 演示样例：评委手边没有发票时，一键载入随仓库分发的样例（与自行上传走同一条流程）
+#   样例放在项目根目录的「演示素材」下；该目录未随部署提供时，界面上的按钮自动置灰
+# ============================================================================
+DEMO_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "演示素材")  # 项目根 / 演示素材
+DEMO_FILE_NAMES = [  # 演示样例：两张数电票 XML（其一金额勾稽不符）+ 两张版式 PDF
+    "02_数电票-金额勾稽不符.xml",  # 故意做错金额勾稽：落入「校验不通过」，同时演示填单闸门
+    "样例-1-数电票原件.xml",
+    "样例-2-版式PDF-印刷费.pdf",
+    "样例-3-版式PDF-再生资源.pdf",
+]
+
+
+class _DemoFile:  # 伪上传对象
+    """把磁盘上的样例文件伪装成上传对象：只要具备 name 与 getvalue()，下游无需区分来源"""
+
+    def __init__(self, name, data):  # 文件名 + 二进制内容
+        self.name = name  # 下游用它显示文件名、取后缀
+        self._data = data  # 文件字节
+
+    def getvalue(self):  # 与 Streamlit 上传对象保持同一接口
+        return self._data  # 返回字节
+
+
+def _demo_paths():  # 本次部署里实际存在的样例文件
+    """项目带了哪些样例就载入哪些；一个都没有时返回空列表（按钮置灰）"""
+    return [p for p in (os.path.join(DEMO_DIR, n) for n in DEMO_FILE_NAMES) if os.path.exists(p)]
+
+
+_DEMO_PATH_LIST = _demo_paths()  # 启动时算一次，按钮与渲染共用
+
+
 def _tier_of(result):  # 判断一张发票落在哪一档
     """只看基础校验结果，判断这张发票属于哪一档（不涉及 Agent）"""
     if not result or result.get("status") == "failed":  # 没有结果，或流程在识别阶段就失败了
@@ -190,12 +222,34 @@ uploaded_files = st.file_uploader(  # 文件上传控件：开了多选后返回
 
 uploaded_files = uploaded_files or []  # 没选文件时可能是 None，统一成空列表方便后面处理
 
+# ---------- 演示样例入口：评委没有发票也能体验 ----------
+if "demo_loaded" not in st.session_state:  # 是否已载入演示样例
+    st.session_state["demo_loaded"] = False  # 默认未载入
+_dc1, _dc2 = st.columns([1.6, 4.4], vertical_alignment="center")  # 左：按钮；右：说明
+with _dc1:  # 一键载入
+    if st.button("载入演示样例", use_container_width=True, key="load_demo", disabled=not _DEMO_PATH_LIST):  # 样例文件缺失时置灰
+        st.session_state["demo_loaded"] = True  # 标记已载入，本次运行随即进入解析流程
+with _dc2:  # 说明文字
+    if _DEMO_PATH_LIST:  # 样例可用
+        st.caption(f"手边没有发票也能体验：点击后载入 {len(_DEMO_PATH_LIST)} 张随仓库分发的样例（数电票 XML 两张、版式 PDF 两张，其中一张金额勾稽不符），与自行上传走同一条识别与校验流程。")
+    else:  # 样例没随部署提供
+        st.caption("本次部署未包含演示样例文件，请自行上传发票体验。")
+
 # ---------- 给当前上传控件里的每个文件算指纹 ----------
 current = {}  # {指纹: (文件对象, 文件字节)}；dict 保持插入顺序，正好等于用户在上传控件里看到的顺序
 for _f in uploaded_files:  # 逐个文件
     _bytes = _f.getvalue()  # 读成二进制（写临时文件和存票夹都要用）
     _sig = f"{_f.name}|{len(_bytes)}|{hashlib.sha256(_bytes).hexdigest()}"  # 文件名 + 大小 + 内容哈希
     current[_sig] = (_f, _bytes)  # 记下来
+
+# ---------- 已载入的演示样例：与上传文件同等对待 ----------
+if st.session_state.get("demo_loaded"):  # 用户点过「载入演示样例」
+    for _dp in _DEMO_PATH_LIST:  # 逐个样例文件
+        _dname = os.path.basename(_dp)  # 样例文件名
+        with open(_dp, "rb") as _fh:  # 从磁盘读取（样例随仓库部署，本地与线上路径一致）
+            _dbytes = _fh.read()  # 二进制内容
+        _dsig = f"{_dname}|{len(_dbytes)}|{hashlib.sha256(_dbytes).hexdigest()}"  # 与上传文件同一套指纹算法
+        current[_dsig] = (_DemoFile(_dname, _dbytes), _dbytes)  # 并入待解析集合，后续流程完全复用
 
 batch = st.session_state["batch"]  # 取出本次会话的解析缓存
 
@@ -224,7 +278,7 @@ if new_sigs:  # 有新文件才解析
 
 # ---------- 第3步：渲染 ----------
 if not current:  # 一张文件都没有
-    st.info("还没有选择文件。上传发票后会自动识别并做基础合规校验，然后给出下一步操作入口。")  # 蓝色引导条
+    st.info("还没有选择文件。可上传发票，或点上方「载入演示样例」一键载入随仓库分发的样例，系统会自动识别并做基础合规校验。")  # 蓝色引导条
 else:  # 有文件：先渲染汇总行，再渲染卡片列表
     _counts = {0: 0, 1: 0, 2: 0, 3: 0}  # 四个档位各有多少张
     for _sig in current:  # 逐张统计
@@ -257,6 +311,7 @@ else:  # 有文件：先渲染汇总行，再渲染卡片列表
     with _c3:  # 右侧：清空
         if st.button("清空", use_container_width=True, key="clear_all"):  # 点它清掉全部已上传发票
             st.session_state["batch"] = {}  # 清掉解析缓存
+            st.session_state["demo_loaded"] = False  # 演示样例也一并清掉
             st.session_state["uploader_version"] += 1  # 换掉上传控件的 key，让已选文件真正被清空
             st.rerun()  # 立刻重跑一次，页面回到「还没有选择文件」的状态
 
