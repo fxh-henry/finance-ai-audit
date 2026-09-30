@@ -975,3 +975,7 @@ def delete_expense_form(form_id):
 
 # 模块加载时自动初始化数据库
 init_db()
+try:
+    seed_demo_if_empty()
+except Exception as _e:
+    print(f'演示数据预置失败（不影响启动）: {_e}')
