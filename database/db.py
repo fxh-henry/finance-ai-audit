@@ -229,6 +229,67 @@ def init_db():
     print(f"数据库初始化完成：{DB_PATH}")
 
 
+def seed_demo_if_empty():
+    """如果库中没有演示数据，从 seed_demo.json 导入一条已完成审核的报销单。"""
+    seed_file = Path(__file__).parent / "seed_demo.json"
+    if not seed_file.exists():
+        return
+
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    demo_invoice_no = "26127000000370193970"
+    cursor.execute("SELECT id FROM invoice WHERE invoice_number = ?", (demo_invoice_no,))
+    if cursor.fetchone():
+        conn.close()
+        return
+
+    import json as _json
+    with open(seed_file, "r", encoding="utf-8") as f:
+        seed = _json.load(f)
+
+    inv = seed["invoice"]
+    form = seed["expense_form"]
+    items = seed["items"]
+    now = _now()
+
+    inv.pop("id", None)
+    inv["uploaded_at"] = now
+    inv["updated_at"] = now
+    inv_cols = ", ".join(inv.keys())
+    inv_placeholders = ", ".join(["?"] * len(inv))
+    cursor.execute(
+        f"INSERT INTO invoice ({inv_cols}) VALUES ({inv_placeholders})",
+        list(inv.values()),
+    )
+    new_invoice_id = cursor.lastrowid
+
+    for item in items:
+        item.pop("id", None)
+        item["invoice_id"] = new_invoice_id
+        item_cols = ", ".join(item.keys())
+        item_placeholders = ", ".join(["?"] * len(item))
+        cursor.execute(
+            f"INSERT INTO invoice_item ({item_cols}) VALUES ({item_placeholders})",
+            list(item.values()),
+        )
+
+    form.pop("id", None)
+    form["invoice_id"] = new_invoice_id
+    form["created_at"] = now
+    form["updated_at"] = now
+    form_cols = ", ".join(form.keys())
+    form_placeholders = ", ".join(["?"] * len(form))
+    cursor.execute(
+        f"INSERT INTO expense_form ({form_cols}) VALUES ({form_placeholders})",
+        list(form.values()),
+    )
+
+    conn.commit()
+    conn.close()
+    print(f"演示数据已预置：发票 {demo_invoice_no}，报销单 {form['form_no']}")
+
+
 def get_default_employee_id():
     """获取默认员工 ID（E001 张三，票夹暂无登录时使用）"""
     conn = get_connection()
