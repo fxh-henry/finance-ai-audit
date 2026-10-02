@@ -51,8 +51,8 @@ DB_PATH = "database/finance_audit.db"
 
 
 # ===== 公司信息（用于发票抬头/税号校验） =====
-COMPANY_NAME ="泗阳县成达制盖有限公司"
-COMPANY_TAX_ID ="91321323796144439H"
+COMPANY_NAME ="泗阳县益亿再生资源有限公司"
+COMPANY_TAX_ID ="91321323MA1UQG4D30"
 # COMPANY_NAME = "泗阳县成达制盖有限公司"
 # COMPANY_TAX_ID = "91321323796144439H"
 
@@ -67,6 +67,7 @@ HEADER_STRICT = False
 # 允许的购买方主体白名单（可填关联公司、分子公司）；命中任意一条即视为抬头正确。
 # 例：{"name": "泗阳县益亿再生资源有限公司", "tax_id": "91321323MA1UQG4D30"}
 ACCEPTED_BUYERS = [
+    {"name": "泗阳县益亿再生资源有限公司", "tax_id": "91321323MA1UQG4D30"},
 ]
 
 # ===== 临时文件目录 =====
